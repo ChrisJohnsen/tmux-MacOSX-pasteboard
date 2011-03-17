@@ -1,0 +1,114 @@
+Processes started under "stock" tmux and screen can not access the
+Mac OS X pasteboard.
+
+Apple publishes their modified source for screen.
+
+    10.4     http://www.opensource.apple.com/source/screen/screen-6.1/
+    10.4.11  http://www.opensource.apple.com/source/screen/screen-6.2/
+    10.5     http://www.opensource.apple.com/source/screen/screen-12/
+    10.5.8   http://www.opensource.apple.com/source/screen/screen-12/
+    10.6     http://www.opensource.apple.com/source/screen/screen-16/
+    10.6.6   http://www.opensource.apple.com/source/screen/screen-19/
+
+Someone adapted Apple's 10.6 screen changes to tmux.
+
+    https://gist.github.com/644805
+
+Basically, it involves replacing the call to daemon() with a
+call to the undocumented function _vprocmgr_detach_from_console().
+
+    Note: 'upstream' screen vs. Apple's 10.6.6 screen
+        http://git.savannah.gnu.org/cgit/screen.git/tree/src/screen.c
+        http://www.opensource.apple.com/source/screen/screen-19/screen/screen.c
+
+        The call to _vprocmgr_detach_from_console was a pure
+        addition, not a replacement for the fork() like the above
+        patch does in tmux.
+
+When I patched recent tmux HEAD (via
+git://github.com/ThomasAdam/tmux.git master), the resulting
+under-tmux shells could access the pasteboard (e.g. pbpaste).
+However, it resulted in many warning messages from libevent.
+
+    [warn] event_del: event has no event_base set.
+
+I see eleven of these messages just doing
+
+    ./tmux new 'echo something'
+
+Additionally, if I start a shell (instead of just an "echo"), I see
+the message after every key press. Until I press ESC. Then the per
+key press messages disappear, and I only see ten of the messages
+after tmux exiting the shell (and thus tmux).
+
+What I want to do here is to make a minimal test rig for
+daemon()/_vprocmgr_detach_from_console() and libevent to see what
+can be done to ameliorate the problem.
+
+Findings from testing on 10.6.6:
+
+    Calling _vprocmgr_detach_from_console() by itself does not
+    impede a child from successfully using pbpaste. The result from
+    getpid() is the same before and after the call, so whatever it
+    does, it does not fork internally.
+    
+    Calling daemon() does prevent a child from successfully using pbpaste.
+
+    A hand-rolled daemon() (fork, setsid, open(/dev/null), dup2 for
+    0-2) does not impede a child from successfully using pbpaste.
+
+I was able to dig up daemon() and the vproc functions. Here are the
+sources for 10.6.6:
+
+    http://www.opensource.apple.com/source/Libc/Libc-594.9.4/gen/daemon-fbsd.c
+    http://www.opensource.apple.com/source/launchd/launchd-329.3.3/launchd/src/libvproc.c
+
+The annoying thing that the system() daemon() is doing is that it
+moves to the root "bootstrap namespace". The bootstrap service is
+what programs use to get access to other services. Being in the root
+namespace prevents the process from accessing the pasteboard
+service (which is only in a per-user namespace in 10.5 and beyond).
+
+After some more subtle testing, I found that the call to
+_vprocmgr_detach_from_console() lets the children of tmux (the whole
+per-session bootstrap namespace?) maintain access to the pasteboard
+even after the session initiator has exited. For example: during
+a GUI login, SSH back to localhost, start a new tmux server there,
+detach from it. Attach from elsewhere and pbpaste still works. Exit
+from the SSH connection (the one that started the tmux process).
+If we used _vprocmgr_detach_from_console, then the children of tmux
+can still access the pasteboard. If we did not call it, then they
+lose access to the pasteboard (the namespace was revoked?).
+
+Possible Resolutions
+--------------------
+
+  Use daemon() from compat/daemon.c and _vprocmgr_detach_from_console()
+
+    autoconf
+      check for 'broken' daemon would require Darwin-specific stuff
+        Not even sure how best to do that. Could check whether
+        (after a call to daemon())  the output from `launchctl
+        bslist` contains "com.apple.pasteboard" (or do the
+        equivalent in straight C, if it does not use even more
+        private APIs).
+      assume Darwin daemon() is broken for our purposes
+        use compat/daemon
+          would it be deterministicly used instead of libSystem daemon()?
+            could #define daemon compat_daemon for compat/daemon.c and server.c
+        still need call to _vprocmgr_detach_from_console()
+          make osdep_daemon() and call it after (compat) daemon()
+
+  Use system daemon() and find a way to re-attach to the/a user
+  session.
+
+    Per TN2083, launchd creates non-GUI per-session namepsaces for
+    accepted SSH connections based on the SSH launchd plist having
+    a SessionCreate key. Looking at the launchd code, it seems that
+    it does this via CreateSession(0,0) from the Security Framework.
+
+        launchd_SessionCreate in
+            http://www.opensource.apple.com/source/launchd/launchd-329.3.3/launchd/src/launchd.c
+
+    Or maybe _vprocmgr_move_subset_to_user(), like the 10.5(?)
+    screen code used?
