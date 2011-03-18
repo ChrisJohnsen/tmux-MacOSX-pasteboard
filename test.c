@@ -73,6 +73,7 @@ int main(int ac, char *av[]) {
         sprintf(buf, thedaemon_str "() failed = %d", r);
         die_errno(buf);
     }
+    fprintf(myerr, "pid==%d (after " thedaemon_str ")\n", getpid());
 #define SNOW_LEOPARD
 #if defined(LEOPARD)
     if(_vprocmgr_move_subset_to_user(getuid(), "Background") != NULL)
@@ -80,7 +81,6 @@ int main(int ac, char *av[]) {
     if(_vprocmgr_move_subset_to_user(getuid(), "Background", 0) != NULL)
 #endif
         die("move_subset_to_user failed");
-    fprintf(myerr, "pid==%d (after " thedaemon_str ")\n", getpid());
 
     if (dup2(e,1) < 0)
         die_errno("dup2(e,1) failed");
@@ -91,7 +91,7 @@ int main(int ac, char *av[]) {
         die("system() failed");
 
     if (WIFEXITED(r))
-        fprintf(myerr, "system() exited %d\n", WEXITSTATUS(r));
+        fprintf(myerr, "system() process exited %d\n", WEXITSTATUS(r));
     else
         fprintf(myerr, "system() == %d", r);
 
