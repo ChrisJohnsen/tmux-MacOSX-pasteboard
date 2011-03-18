@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <Security/AuthSession.h>
+
 void *_vprocmgr_detach_from_console(unsigned int flags);
 
 static FILE *myerr;
@@ -81,6 +83,14 @@ int main(int ac, char *av[]) {
     if(_vprocmgr_move_subset_to_user(getuid(), "Background", 0) != NULL)
 #endif
         die("move_subset_to_user failed");
+
+#if 0
+    OSStatus result = SessionCreate(0, 0x30);
+    /* 0x1,0x11,0x21,0x1001,0x1011,0x1021,0x1031 -> -60501
+     * (invalid attribute bits)
+     */
+    fprintf(myerr, "SessionCreate() returned %d\n", result);
+#endif
 
     if (dup2(e,1) < 0)
         die_errno("dup2(e,1) failed");
