@@ -23,6 +23,9 @@ void die(int ev, const char *fmt, ...) {
     va_start(ap,fmt);
     vfprintf(stderr, new_fmt, ap);
     va_end(ap);
+
+    free(new_fmt);
+
     exit(ev);
 }
 
