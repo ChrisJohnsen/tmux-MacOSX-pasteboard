@@ -1,7 +1,7 @@
-#include <string.h>    /* strlen, strcpy, strerror */
+#include <string.h>    /* strlen, strcpy, strerror, strcmp, strrchr */
 #include <stdarg.h>    /* va_...   */
 #include <stdio.h>     /* fprintf, vfprintf  */
-#include <stdlib.h>    /* exit     */
+#include <stdlib.h>    /* malloc, exit, free */
 #include <dlfcn.h>     /* dlsym    */
 #include <stdint.h>    /* uint64_t */
 #include <unistd.h>    /* execvp   */
@@ -78,8 +78,42 @@ int main(int argc, char *argv[]) {
             break;
     }
 
-    if (execvp(argv[1], argv+1) < 0)
+    int arg = 1;
+    char **newargs = argv+arg;
+    const char *file = argv[arg++];
+    if (!strcmp(file, "-l")) {
+        file = argv[arg];
+        /*
+         * For their argv[0], take the bit of file after the
+         * last slash (the whole thing if there is no slash
+         * or if that bit would be zero length) and prefix
+         * it with '-'.
+         */
+        char *arg0 = malloc(strlen(file) + 2);
+        *arg0 = '-';
+        char *slash = strrchr(file, '/');
+        if (slash && slash[1])
+            strcpy(arg0+1, slash+1);
+        else
+            strcpy(arg0+1, file);
+
+        /* use the rest of the args as they are */
+        int ofs = arg;
+        newargs = malloc(sizeof(*newargs) * (argc-ofs+1));
+        newargs[arg-ofs] = arg0;
+        arg++;
+        for(; arg < argc; arg++)
+            newargs[arg-ofs] = argv[arg];
+        newargs[arg-ofs] = NULL;
+    }
+
+    if (execvp(file, newargs) < 0)
         die(3, "execv failed: %s", strerror(errno));
+
+    if (newargs) {
+        free(newargs[0]);
+        free(newargs);
+    }
 
     return 0;
 }
