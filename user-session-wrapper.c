@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
             {
                 const char fn[] = "_vprocmgr_move_subset_to_user";
                 void *f;
-                if (!(f = dlsym(RTLD_SELF, fn)))
+                if (!(f = dlsym(RTLD_NEXT, fn)))
                     die(2, "unable to find %s: %s", fn, dlerror());
 
                 void *r;
