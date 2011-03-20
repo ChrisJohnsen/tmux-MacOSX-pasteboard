@@ -3,3 +3,4 @@ wrapper: switch 10.6 to detach "detach from console" from 10.6's screen patch?
     case the "move subset to user" one is removed in a future
     release (even if the idea of "detach to reattach (to the user
     bootstrap namespace)" seems odd).
+wrapper: warn function/macro
