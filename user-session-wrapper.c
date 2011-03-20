@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (execvp(file, newargs) < 0)
-        die(3, "execv failed: %s", strerror(errno));
+        die_errno(3, "execv failed");
 
     if (newargs) {
         free(newargs[0]);
