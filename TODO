@@ -1,4 +1,3 @@
-wrapper: detect OS version: probably uname(3): warn non-Darwin
 wrapper: switch 10.6 to detach "detach from console" from 10.6's screen patch?
     We want to move to newer "detach from console" function just in
     case the "move subset to user" one is removed in a future
