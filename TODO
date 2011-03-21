@@ -1,5 +1,32 @@
-wrapper: switch 10.6 to detach "detach from console" from 10.6's screen patch?
-    We want to move to newer "detach from console" function just in
-    case the "move subset to user" one is removed in a future
-    release (even if the idea of "detach to reattach (to the user
-    bootstrap namespace)" seems odd).
+test: make operations selectable at run-time
+    Lets others test various combinations and orders without mucking
+    about with editing and recompiling. Target compilability on 10.5.
+        sys-daemon - system daemon(3)
+        our-daemon - our daemon()
+        detach     - try _vprocmgr_detach_from_console(0)
+        move-to-user=10.5 - try 10.5 _vprocmgr_move_subset_to_user(getuid(),"Background")
+        move-to-user=10.6 - try 10.6 _vprocmgr_move_subset_to_user(getuid(),"Background",0)
+        pbpaste    - system(3) to pbpaste and report exit status
+test: come up with a way to demonstrate the utility of detaching
+    My test had been to run tumx under local ssh, "tmux detach", then exit.
+    How can this be simplified?
+        Another function/"option" 'pbpaste-to=<path>'
+            Use it in sequence:
+                echo 'my uniqish message' | pbcopy # test that it was successful
+                cp /dev/null /some/file
+                ssh localhost '/path/to/test \
+                                 detach,our-daemon,sleep=10,pbpaste-to=/some/file'
+                tail -f /some/file
+            Also combinations with sys-daemon:
+                sys-daemon,sleep...
+                detach,sys-daemon,sleep...
+                sys-daemon,move-to-user=10.6,sleep...
+                detach,sys-daemon,move-to-user=10.6,sleep...
+            I expect that when using 'our-daemon' the message will
+            not show show up without using 'detach' (the loss of the
+            ssh session revokes its children's access to the
+            pre-user bootstrap namespace).
+            I expect that we always lose access after 'sys-daemon'
+            unless we 'move-to-user' afterwards ('sys-daemon' not
+            only detaches from the "console", but also from the
+            whole per-user bootstrap namespace).
