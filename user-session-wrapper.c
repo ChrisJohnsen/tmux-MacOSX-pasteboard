@@ -13,20 +13,35 @@ void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type); /* 10.5 */
 #endif
 
-void die(int ev, const char *fmt, ...) {
-    va_list ap;
-    int len = strlen(fmt);
-    char *new_fmt = malloc(len+2);
+void vfmsg(FILE *f, const char *pre, const char *fmt, va_list ap) {
+    int plen = 0;
+    if (pre)
+        plen = strlen(pre);
+    int flen = strlen(fmt);
+    char *new_fmt = malloc(plen+flen+2);
 
-    strcpy(new_fmt,fmt);
-    strcpy(new_fmt+len,"\n");
+    if (pre)
+        strcpy(new_fmt, pre);
+    strcpy(new_fmt+plen, fmt);
+    strcpy(new_fmt+plen+flen, "\n");
 
-    va_start(ap,fmt);
-    vfprintf(stderr, new_fmt, ap);
-    va_end(ap);
+    vfprintf(f, new_fmt, ap);
 
     free(new_fmt);
+}
 
+void warn(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfmsg(stderr, "warning: ", fmt, ap);
+    va_end(ap);
+}
+
+void die(int ev, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfmsg(stderr, "fatal: ", fmt, ap);
+    va_end(ap);
     exit(ev);
 }
 
@@ -46,7 +61,7 @@ int main(int argc, char *argv[]) {
     if (uname(&u))
         die_errno(2, "uname failed");
     if (strcmp(u.sysname, "Darwin"))
-        fprintf(stderr, "warning: unsupported OS sysname: %s\n", u.sysname);
+        warn("unsupported OS sysname: %s", u.sysname);
 
     char *rest, *whole = strdup(u.release);
     if (!whole)
@@ -61,15 +76,15 @@ int main(int argc, char *argv[]) {
             os = 1000;
     }
     else
-        fprintf(stderr, "warning: unparsable major release number: '%s'\n", u.release);
+        warn("unparsable major release number: '%s'", u.release);
 
     free(whole);
 
     if (os < 1050) {
-        fprintf(stderr, "warning: unsupported old OS, trying as if it were 10.5\n");
+        warn("unsupported old OS, trying as if it were 10.5");
         os = 1050;
     } else if (os > 1060) {
-        fprintf(stderr, "warning: unsupported new OS, trying as if it were 10.6\n");
+        warn("unsupported new OS, trying as if it were 10.6");
         os = 1060;
     }
 
