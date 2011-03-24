@@ -1,55 +1,18 @@
-#include <string.h>    /* strlen, strcpy, strerror, strcmp, strrchr */
+#include <string.h>    /* strlen, strcpy, strcmp, strrchr */
 #include <stdarg.h>    /* va_...   */
 #include <stdio.h>     /* fprintf, vfprintf  */
 #include <stdlib.h>    /* malloc, exit, free, atoi */
 #include <dlfcn.h>     /* dlsym    */
 #include <stdint.h>    /* uint64_t */
 #include <unistd.h>    /* execvp   */
-#include <sys/errno.h> /* errno    */
 #include <sys/utsname.h> /* uname  */
+
+#include "msg.h"
 
 #if 0
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type, uint64_t flags); /* 10.6 */
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type); /* 10.5 */
 #endif
-
-void vfmsg(FILE *f, const char *pre, const char *fmt, va_list ap) {
-    int plen = 0;
-    if (pre)
-        plen = strlen(pre);
-    int flen = strlen(fmt);
-    char *new_fmt = malloc(plen+flen+2);
-
-    if (pre)
-        strcpy(new_fmt, pre);
-    strcpy(new_fmt+plen, fmt);
-    strcpy(new_fmt+plen+flen, "\n");
-
-    vfprintf(f, new_fmt, ap);
-
-    free(new_fmt);
-}
-
-void warn(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vfmsg(stderr, "warning: ", fmt, ap);
-    va_end(ap);
-}
-
-void die(int ev, const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vfmsg(stderr, "fatal: ", fmt, ap);
-    va_end(ap);
-    exit(ev);
-}
-
-/*
- * ##__VA_ARGS_ is a GNU CPP extension to invoke with zero extra args.
- * Expects f to be a literal string (for compile-time concatenation).
- */
-#define die_errno(x,f,...) die((x),(f ": %s"),##__VA_ARGS__,strerror(errno))
 
 int main(int argc, char *argv[]) {
     if (argc < 2)
