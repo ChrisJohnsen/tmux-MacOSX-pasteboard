@@ -1,30 +1,15 @@
+#include <unistd.h>
+#include <stdlib.h>
 #include <sys/errno.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/unistd.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <dlfcn.h>
 
-#include <Security/AuthSession.h>
+#include "msg.h"
 
-void *_vprocmgr_detach_from_console(unsigned int flags);
-
-static FILE *myerr;
-
-void die(const char *str) {
-    fprintf(myerr?myerr:stderr, "fatal: %s\n", str);
-    exit(1);
-}
-void die_errno(const char *str) {
-    fprintf(myerr?myerr:stderr, "fatal: %s: %s\n", str, strerror(errno));
-    exit(1);
-}
-
-int mydaemon(int nochdir, int noclose) {
+int our_daemon(int nochdir, int noclose) {
     /*
+     * Implementation based on description in daemon(3).
      * Hmm, got pretty close.
      * http://www.opensource.apple.com/source/Libc/Libc-594.9.4/gen/daemon-fbsd.c
      * Theirs touches on signal handling, too. And, it does the
@@ -44,66 +29,185 @@ int mydaemon(int nochdir, int noclose) {
     return 0;
 }
 
-#ifdef MYDAEMON
-#define thedaemon(a,b) mydaemon(a,b)
-#define thedaemon_str "mydaemon"
-#else
-#define thedaemon(a,b) daemon(a,b)
-#define thedaemon_str "daemon"
-#endif
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+static int sys_daemon(int nocd, int nocl) { return daemon(nocd, nocl); }
+#pragma GCC diagnostic warning "-Wdeprecated-declarations"
 
-#include <stdint.h>
-void *
-_vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type, uint64_t flags);
+static void do_daemon(const char *opt) {
+    if (!(opt && *opt))
+        die(2, "daemon requires an option (i.e. daemon=sys)");
 
-int main(int ac, char *av[]) {
-    int r, o, e;
+    int (*daemon_)(int,int);
+    if (!strcmp(opt,"sys"))
+        daemon_ = sys_daemon;
+    else if (!strcmp(opt, "ours"))
+        daemon_ = our_daemon;
+    else
+        die(2, "daemon: unknown option: %s", opt);
 
-    if ((e = dup(2)) < 0)
-        die_errno("dup myerr");
-    if (!(myerr = fdopen(e, "w")))
-        die_errno("fdopen for myerr");
+    int r = daemon_(1,0);
+    if (r) die_errno(2, "%s daemon() failed = %d", opt, r);
+}
 
-    fprintf(myerr, "pid==%d\n", getpid());
-    /*
-    if (_vprocmgr_detach_from_console(0) != NULL)
-        die("_vprocmgr_detach_from_console failed");
-    fprintf(myerr, "pid==%d (after detach)\n", getpid());
-    */
-    if ((r = thedaemon(1,0))) {
-        char buf[256];
-        sprintf(buf, thedaemon_str "() failed = %d", r);
-        die_errno(buf);
-    }
-    fprintf(myerr, "pid==%d (after " thedaemon_str ")\n", getpid());
-#define SNOW_LEOPARD
-#if defined(LEOPARD)
-    if(_vprocmgr_move_subset_to_user(getuid(), "Background") != NULL)
-#elif defined(SNOW_LEOPARD)
-    if(_vprocmgr_move_subset_to_user(getuid(), "Background", 0) != NULL)
-#endif
-        die("move_subset_to_user failed");
+static void show_pid(const char *opt) {
+    msg("pid: %d (%s)", getpid(), opt ? opt : "");
+}
 
-#if 0
-    OSStatus result = SessionCreate(0, 0x30);
-    /* 0x1,0x11,0x21,0x1001,0x1011,0x1021,0x1031 -> -60501
-     * (invalid attribute bits)
-     */
-    fprintf(myerr, "SessionCreate() returned %d\n", result);
-#endif
+#include <stdint.h> /* uint64_t */
+typedef void *(*move_to_user_10_5_f)
+    (uid_t target_user, const char *session_type);
+typedef void *(*move_to_user_10_6_f)
+    (uid_t target_user, const char *session_type, uint64_t flags);
+static void move_to_user(const char *opt) {
+    if (!(opt && *opt))
+        die(3, "move-to-user: requires an option (i.e. move-to-user=10.6)");
 
-    if (dup2(e,1) < 0)
-        die_errno("dup2(e,1) failed");
-    if (dup2(e,2) < 0)
-        die_errno("dup2(e,2) failed");
+    static const char * const move_to_user_fn = "_vprocmgr_move_subset_to_user";
+    void *f = dlsym(RTLD_NEXT, move_to_user_fn);
+    if (!f) die(3, "unable to find %s: %s", move_to_user_fn, dlerror());
 
-    if ((r = system("pbpaste")) < 0)
-        die("system() failed");
+    static const char * const session_type = "Background";
+    void *r;
+    if (!strcmp(opt, "10.5"))
+        r = ((move_to_user_10_5_f)f)(getuid(), session_type);
+    else if (!strcmp(opt, "10.6"))
+        r = ((move_to_user_10_6_f)f)(getuid(), session_type, 0);
+    else
+        die(3, "move-to-user: unkown option: %s", opt);
+    if (r) die(3, "%s failed", move_to_user_fn);
+}
+
+typedef void *(*detach_from_console_f)(unsigned int flags);
+void detach_from_console(const char *opt) {
+    static const char * const detach_fn = "_vprocmgr_detach_from_console";
+    void *f = dlsym(RTLD_NEXT, detach_fn);
+    if (!f) die(4, "unable to find %s: %s", detach_fn, dlerror());
+    if (((detach_from_console_f)f)(0) != NULL)
+        die(4, "%s failed", detach_fn);
+}
+
+static int out_fd;
+void do_system(const char *opt) {
+    if (dup2(out_fd,1) < 0)
+        die_errno(5, "dup2(out_fd,1) failed");
+    if (dup2(out_fd,2) < 0)
+        die_errno(5, "dup2(out_fd,2) failed");
+
+    int r = system(opt);
+    if (r < 0)
+        die(5, "system() failed");
 
     if (WIFEXITED(r))
-        fprintf(myerr, "system() process exited %d\n", WEXITSTATUS(r));
-    else
-        fprintf(myerr, "system() == %d", r);
+        msg("system(%s) process exited %d", opt, WEXITSTATUS(r));
+    else if (WIFSIGNALED(r))
+        msg("system(%s) process terminated by signal %d", opt, WTERMSIG(r));
+    else if (WIFSTOPPED(r))
+        msg("system(%s) process stopped with signal %d", opt, WSTOPSIG(r));
+}
+
+static int parse_int(const char *str, char **rest_,
+        char expected_stop) {
+    char *rest;
+    errno = 0;
+    int v = strtoul(str, &rest, 0);
+    if (errno)
+        die_errno(1, "error parsing \"%s\" as int", str);
+    if (rest && *rest != expected_stop)
+        die(1, "unexpected char '%c' (%d) while parsing int from \"%s\"",
+                *rest, *rest, str);
+    if (rest_) *rest_ = rest;
+    return v;
+}
+
+typedef int (*session_create_f)(int, int);
+static void session_create(const char *opt) {
+    static const char * const fw =
+        "/System/Library/Frameworks/Security.framework/Versions/Current/Security";
+    static const char * const fn = "SessionCreate";
+    if (!(opt && *opt && strchr(opt, ',')))
+        die(6, "session-createn needs two args (e.g. 0,0)");
+    char *rest;
+    int a = parse_int(opt, &rest, ',');
+    int b = parse_int(rest+1, NULL, '\0');
+    void *lib = dlopen(fw, RTLD_LAZY|RTLD_LOCAL);
+    if (!lib)
+        die(6, "unable to load Security framework (%s): %s", fw, dlerror());
+    void *f = dlsym(lib, fn);
+    msg("calling %s(0x%x,0x%x)", fn, a, b);
+    int r = ((session_create_f)f)(a, b);
+    if (r) die(6, "%s failed: %d", fn, r);
+    if (dlclose(lib))
+        die(6, "unable to close Security framework: %s", dlerror());
+    /*
+    OSStatus result = SessionCreate(0, 0x30);
+     * 0x1,0x11,0x21,0x1001,0x1011,0x1021,0x1031 -> -60501
+     * (invalid attribute bits)
+     */
+}
+
+void do_sleep(const char *opt) {
+    int s = parse_int(opt, NULL, '\0');
+    sleep(s);
+}
+
+void show_msg(const char *opt) {
+    msg("%s", opt);
+}
+
+typedef int foo;
+typedef void (*cmd_func)(const char *opt);
+struct cmd {
+    cmd_func func;
+    char str[32];
+};
+
+static struct cmd all_cmds[] = {
+    { do_daemon, "daemon" },
+    { show_pid, "pid" },
+    { move_to_user, "move-to-user" },
+    { detach_from_console, "detach" },
+    { do_system, "system" },
+    { session_create, "session-create" },
+    { do_sleep, "sleep" },
+    { show_msg, "msg" },
+    { NULL, "" }
+};
+
+static void run_cmd(const char *cmd) {
+    struct cmd *c = all_cmds;
+    const char *opt = strchr(cmd, '=');
+    int cmd_len = opt ? opt-cmd : strlen(cmd);
+    if (!cmd_len)
+        die(1, "no command in argument: %s", cmd);
+    if (opt)
+        opt++;
+    while (c->func) {
+        if (!strncmp(cmd, c->str, cmd_len) &&
+                c->str[cmd_len] == '\0')
+            return c->func(opt);
+        c++;
+    }
+    die(1, "unknown command: %s", cmd);
+}
+
+int main(int argc, const char * const argv[]) {
+    if ((out_fd = dup(2)) < 0)
+        die_errno(1, "dup msgout");
+    FILE *out = fdopen(out_fd, "w");
+    if (!out) die_errno(1, "fdopen for msgout");
+    msgout = out;
+
+    const char * const default_cmds[] = {
+        "pid=initial",
+        "daemon=sys", "pid=after daemon",
+        "move-to-user=10.6", "pid=after move",
+        "system=pbpaste",
+        NULL
+    };
+    const char * const * cmds = argc > 1 ? argv+1 : default_cmds;
+
+    while(*cmds)
+        run_cmd(*cmds++);
 
     return 0;
 }
