@@ -13,17 +13,21 @@ void vfmsg(FILE *f,
     if (pre) prelen = strlen(pre);
     if (fmt) fmtlen = strlen(fmt);
     if (suf) suflen = strlen(suf);
-    char *newfmt = malloc(prelen + fmtlen +
+    char *newfmt = malloc(
+            prelen*2 + /* %-doubled pre */
+            fmtlen +
             2 + /* ':' and SP */
             suflen*2 + /* %-doubled suf */
             2 /* NL and NUL */
             );
+    if (!newfmt)
+        goto finish;
 
     char *newfmt_end = newfmt;
-    if (prelen) {
-        strcpy(newfmt_end, pre);
-        newfmt_end += prelen;
-    }
+    if (prelen)
+        while(*pre)
+            if ((*newfmt_end++ = *pre++) == '%')
+                *newfmt_end++ = '%';
     if (fmtlen) {
         strcpy(newfmt_end, fmt);
         newfmt_end += fmtlen;
@@ -37,11 +41,14 @@ void vfmsg(FILE *f,
     }
     *newfmt_end++ = '\n';
     *newfmt_end++ = '\0';
+    fmt = newfmt;
 
-    vfprintf(f, newfmt, ap);
+finish:
+    vfprintf(f, fmt, ap);
     fflush(f);
 
-    free(newfmt);
+    if (newfmt)
+        free(newfmt);
 }
 
 FILE *msgout = NULL;
