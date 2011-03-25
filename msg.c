@@ -7,7 +7,7 @@
 #include "msg.h"
 
 void vfmsg(FILE *f,
-        const char *pre, const char *fmt, const char *suf,
+        const char *pre, const char *suf, const char *fmt,
         va_list ap) {
     int prelen = 0, fmtlen = 0, suflen = 0;
     if (pre) prelen = strlen(pre);
@@ -53,28 +53,28 @@ finish:
 
 FILE *msgout = NULL;
 
-void vmsg(const char *pre, const char *fmt, const char *suf, va_list ap) {
-    vfmsg(msgout ? msgout : stderr, pre, fmt, suf, ap);
+void vmsg(const char *pre, const char *suf, const char *fmt, va_list ap) {
+    vfmsg(msgout ? msgout : stderr, pre, suf, fmt, ap);
 }
 
 void msg(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    vmsg(NULL, fmt, NULL, ap);
+    vmsg(NULL, NULL, fmt, ap);
     va_end(ap);
 }
 
 void warn(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    vmsg("warning: ", fmt, NULL, ap);
+    vmsg("warning: ", NULL, fmt, ap);
     va_end(ap);
 }
 
 void die(int ev, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    vmsg("fatal: ", fmt, NULL, ap);
+    vmsg("fatal: ", NULL, fmt, ap);
     va_end(ap);
     exit(ev);
 }
@@ -83,8 +83,7 @@ void die_errno(int ev, const char *fmt, ...) {
     int err = errno; /* just in case it gets clobbered */
     va_list ap;
     va_start(ap, fmt);
-    vmsg("fatal: ", fmt, strerror(err), ap);
+    vmsg("fatal: ", strerror(err), fmt, ap);
     va_end(ap);
     exit(ev);
 }
-
