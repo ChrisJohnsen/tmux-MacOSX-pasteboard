@@ -1,5 +1,13 @@
-all: test user-session-wrapper
+MSG_BINARIES = test user-session-wrapper
+MSG_OBJECTS = $(MSG_BINARIES:%=%.o) msg.o
 
-user-session-wrapper: user-session-wrapper.o msg.o
+OBJECTS = $(MSG_OBJECTS)
+BINARIES = $(MSG_BINARIES)
 
-test: test.o msg.o
+all: $(BINARIES)
+
+$(MSG_BINARIES): msg.o
+$(MSG_OBJECTS): msg.h
+
+clean:
+	rm -f $(BINARIES) $(OBJECTS)
