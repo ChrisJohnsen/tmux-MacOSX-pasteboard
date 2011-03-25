@@ -4,6 +4,8 @@
 #include <stdlib.h>    /* malloc, exit, free */
 #include <sys/errno.h> /* errno    */
 
+#include "msg.h"
+
 void vfmsg(FILE *f,
         const char *pre, const char *fmt, const char *suf,
         va_list ap) {
