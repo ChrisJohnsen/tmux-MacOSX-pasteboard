@@ -159,35 +159,58 @@ typedef void (*cmd_func)(const char *opt);
 struct cmd {
     cmd_func func;
     char str[32];
+    char desc[256];
 };
 
+static void help(const char *);
 static struct cmd all_cmds[] = {
-    { do_daemon, "daemon" },
-    { show_pid, "pid" },
-    { move_to_user, "move-to-user" },
-    { detach_from_console, "detach" },
-    { do_system, "system" },
-    { session_create, "session-create" },
-    { do_sleep, "sleep" },
-    { show_msg, "msg" },
-    { NULL, "" }
+    { show_msg,       "msg",    "=<text>   print text to stderr" },
+    { show_pid,       "pid",    "=<text>   print pid and text to stderr" },
+    { do_sleep,       "sleep",  "=<secs>   sleep(secs)" },
+    { do_daemon,      "daemon", "=sys      system daemon(3)\n"
+                                "=ours     non-Apple version" },
+    { detach_from_console,
+                      "detach", "          _vprocmgr_detach_from_console(0)", },
+    { do_system,      "system", "=<cmd>    system(cmd)"},
+    { move_to_user,   "move-to-user",
+                                "=10.5     _vprocmgr_move_subset_to_user(uid,\"Background\")\n"
+                                "=10.6         call with extra arg == 0" },
+    { session_create, "session-create",
+                                "=<a>,<b>  SessionCreate(a,b) (numeric a and b)" },
+    { help,           "help",   "          show this help text" },
+    { NULL, "", "" }
 };
+
+static void help(const char *opt) {
+    struct cmd *c = all_cmds;
+    int w, cmd_width = 0;
+    for (c = all_cmds; c->func; c++) {
+        w = strlen(c->str);
+        cmd_width = w > cmd_width ? w : cmd_width;
+    }
+    for (c = all_cmds; c->func; c++) {
+        char *nl, *s = c->desc;
+        while ((nl = strchr(s, '\n'))) {
+            msg("    %*s%.*s", cmd_width, c->str, nl-s, s);
+            s = nl+1;
+        }
+        msg("    %*s%s", cmd_width, c->str, s);
+    }
+}
 
 static void run_cmd(const char *cmd) {
-    struct cmd *c = all_cmds;
     const char *opt = strchr(cmd, '=');
     int cmd_len = opt ? opt-cmd : strlen(cmd);
     if (!cmd_len)
         die(1, "no command in argument: %s", cmd);
     if (opt)
         opt++;
-    while (c->func) {
+    struct cmd *c;
+    for (c = all_cmds; c->func; c++)
         if (!strncmp(cmd, c->str, cmd_len) &&
                 c->str[cmd_len] == '\0')
             return c->func(opt);
-        c++;
-    }
-    die(1, "unknown command: %s", cmd);
+    die(1, "unknown command: %s (try help)", cmd);
 }
 
 int main(int argc, const char * const argv[]) {
@@ -197,15 +220,13 @@ int main(int argc, const char * const argv[]) {
     if (!out) die_errno(1, "fdopen for msgout");
     msgout = out;
 
-    const char * const default_cmds[] = {
-        "pid=initial",
-        "daemon=sys", "pid=after daemon",
-        "move-to-user=10.6", "pid=after move",
-        "system=pbpaste",
-        NULL
-    };
-    const char * const * cmds = argc > 1 ? argv+1 : default_cmds;
+    if (argc < 2)
+        die(1, "usage: %s <command>...\n\n"
+                "    Execute the given commands.\n"
+                "    Run \"%s help\" for command list.\n",
+                argv[0], argv[0]);
 
+    const char * const * cmds = argv+1;
     while(*cmds)
         run_cmd(*cmds++);
 

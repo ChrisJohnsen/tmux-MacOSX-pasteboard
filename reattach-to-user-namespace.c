@@ -14,9 +14,14 @@ void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type); /* 10.5 */
 #endif
 
+static char usage_msg[] = "\n"
+    "    Reattach to the per-user bootstrap namespace in its \"Background\"\n"
+    "    session then exec the program with args. If \"-l\" is given,\n"
+    "    rewrite the program's argv[0] so that it starts with a '-'.\n";
+
 int main(int argc, char *argv[]) {
     if (argc < 2)
-        die(1, "usage: %s <program> [args...]", argv[0]);
+        die(1, "usage: %s [-l] <program> [args...]\n%s", argv[0], usage_msg);
 
     unsigned int os = 0;
 
