@@ -4,7 +4,7 @@ ARCH_FLAGS = $(ARCHES:%=-arch %)
 CFLAGS += $(ARCH_FLAGS) -mmacosx-version-min=10.5
 LDFLAGS += $(ARCH_FLAGS)
 
-MSG_BINARIES = test user-session-wrapper
+MSG_BINARIES = test reattach-to-user-namespace
 MSG_OBJECTS = $(MSG_BINARIES:%=%.o) msg.o
 
 OBJECTS = $(MSG_OBJECTS)
