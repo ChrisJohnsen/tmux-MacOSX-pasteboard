@@ -38,6 +38,8 @@
 
 #include "msg.h"
 
+#define UNUSED __attribute__ ((unused))
+
 int our_daemon(int nochdir, int noclose) {
     /*
      * Implementation based on description in daemon(3).
@@ -109,7 +111,7 @@ static void move_to_user(const char *opt) {
 }
 
 typedef void *(*detach_from_console_f)(unsigned int flags);
-void detach_from_console(const char *opt) {
+void detach_from_console(const char *opt UNUSED) {
     static const char * const detach_fn = "_vprocmgr_detach_from_console";
     void *f = dlsym(RTLD_NEXT, detach_fn);
     if (!f) die(4, "unable to find %s: %s", detach_fn, dlerror());
@@ -212,7 +214,7 @@ static struct cmd all_cmds[] = {
     { NULL, "", "" }
 };
 
-static void help(const char *opt) {
+static void help(const char *opt UNUSED) {
     struct cmd *c = all_cmds;
     int w, cmd_width = 0;
     for (c = all_cmds; c->func; c++) {
@@ -231,7 +233,7 @@ static void help(const char *opt) {
 
 static void run_cmd(const char *cmd) {
     const char *opt = strchr(cmd, '=');
-    int cmd_len = opt ? opt-cmd : strlen(cmd);
+    size_t cmd_len = opt ? (size_t)(opt-cmd) : strlen(cmd);
     if (!cmd_len)
         die(1, "no command in argument: %s", cmd);
     if (opt)

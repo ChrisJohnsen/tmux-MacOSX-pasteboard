@@ -1,6 +1,7 @@
 ARCHES = i386 ppc x86_64
 ARCH_FLAGS = $(ARCHES:%=-arch %)
 
+CFLAGS ?= -Wall -Wextra -ansi -pendantic
 CFLAGS += $(ARCH_FLAGS) -mmacosx-version-min=10.5
 LDFLAGS += $(ARCH_FLAGS)
 
