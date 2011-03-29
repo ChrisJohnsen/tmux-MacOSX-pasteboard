@@ -125,10 +125,10 @@ int main(int argc, char *argv[]) {
     }
 
     int arg = 1;
-    char **newargs = argv+arg;
-    const char *file = argv[arg++];
+    char **newargs = NULL;
+    const char *file = argv[arg];
     if (!strcmp(file, "-l")) {
-        file = argv[arg];
+        file = argv[++arg];
         /*
          * For their argv[0], take the bit of file after the
          * last slash (the whole thing if there is no slash
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
         newargs[arg-ofs] = NULL;
     }
 
-    if (execvp(file, newargs) < 0)
+    if (execvp(file, newargs ? newargs : argv+arg) < 0)
         die_errno(3, "execv failed");
 
     if (newargs) {
