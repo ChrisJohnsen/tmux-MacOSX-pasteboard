@@ -187,7 +187,6 @@ static void show_msg(const char *opt) {
     msg("%s", opt);
 }
 
-typedef int foo;
 typedef void (*cmd_func)(const char *opt);
 struct cmd {
     cmd_func func;
