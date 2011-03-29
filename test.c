@@ -40,7 +40,7 @@
 
 #define UNUSED __attribute__ ((unused))
 
-int our_daemon(int nochdir, int noclose) {
+static int our_daemon(int nochdir, int noclose) {
     /*
      * Implementation based on description in daemon(3).
      * Hmm, got pretty close.
@@ -111,7 +111,7 @@ static void move_to_user(const char *opt) {
 }
 
 typedef void *(*detach_from_console_f)(unsigned int flags);
-void detach_from_console(const char *opt UNUSED) {
+static void detach_from_console(const char *opt UNUSED) {
     static const char * const detach_fn = "_vprocmgr_detach_from_console";
     void *f = dlsym(RTLD_NEXT, detach_fn);
     if (!f) die(4, "unable to find %s: %s", detach_fn, dlerror());
@@ -120,7 +120,7 @@ void detach_from_console(const char *opt UNUSED) {
 }
 
 static int out_fd;
-void do_system(const char *opt) {
+static void do_system(const char *opt) {
     if (dup2(out_fd,1) < 0)
         die_errno(5, "dup2(out_fd,1) failed");
     if (dup2(out_fd,2) < 0)
@@ -178,12 +178,12 @@ static void session_create(const char *opt) {
      */
 }
 
-void do_sleep(const char *opt) {
+static void do_sleep(const char *opt) {
     int s = parse_int(opt, NULL, '\0');
     sleep(s);
 }
 
-void show_msg(const char *opt) {
+static void show_msg(const char *opt) {
     msg("%s", opt);
 }
 
