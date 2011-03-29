@@ -187,14 +187,17 @@ static void show_msg(const char *opt) {
     msg("%s", opt);
 }
 
-typedef void (*cmd_func)(const char *opt);
+typedef void cmd_func(const char *opt);
 struct cmd {
-    cmd_func func;
+    cmd_func * const func;
     const char * const str;
     const char * const desc;
 };
 
-static void help(const char *);
+static cmd_func
+    show_msg, show_pid, do_sleep, do_daemon, detach_from_console,
+    do_system, move_to_user, session_create, help;
+
 static struct cmd all_cmds[] = {
     { show_msg,       "msg",    "=<text>   print text to stderr" },
     { show_pid,       "pid",    "=<text>   print pid and text to stderr" },
