@@ -22,7 +22,7 @@ call to the undocumented function _vprocmgr_detach_from_console().
         http://www.opensource.apple.com/source/screen/screen-19/screen/screen.c
 
         The call to _vprocmgr_detach_from_console was a pure
-        addition, not a replacement for the fork() like the above
+        addition, not a replacement for daemon(3) like the above
         patch does in tmux.
 
 When I patched recent tmux HEAD (via
@@ -37,9 +37,12 @@ I see eleven of these messages just doing
     ./tmux new 'echo something'
 
 Additionally, if I start a shell (instead of just an "echo"), I see
-the message after every key press. Until I press ESC. Then the per
-key press messages disappear, and I only see ten of the messages
+the message after every key press, until I press ESC. Then the
+message per key press disappears and I only see ten of the messages
 after tmux exiting the shell (and thus tmux).
+
+This appears to be a bad interaction between not forking (via
+daemon(3)) and the way libevent is used (maybe just libevent 2.0).
 
 What I want to do here is to make a minimal test rig for
 daemon()/_vprocmgr_detach_from_console() and libevent to see what
@@ -63,22 +66,23 @@ sources for 10.6.6:
     http://www.opensource.apple.com/source/Libc/Libc-594.9.4/gen/daemon-fbsd.c
     http://www.opensource.apple.com/source/launchd/launchd-329.3.3/launchd/src/libvproc.c
 
-The annoying thing that the system() daemon() is doing is that it
+The annoying thing that the system daemon(3) is doing is that it
 moves to the root "bootstrap namespace". The bootstrap service is
 what programs use to get access to other services. Being in the root
-namespace prevents the process from accessing the pasteboard
-service (which is only in a per-user namespace in 10.5 and beyond).
+namespace prevents the process from accessing the pasteboard service
+(which is only in a per-user namespace in 10.5 and beyond).
 
-After some more subtle testing, I found that the call to
-_vprocmgr_detach_from_console() lets the children of tmux (the whole
-per-session bootstrap namespace?) maintain access to the pasteboard
-even after the session initiator has exited. For example: during
-a GUI login, SSH back to localhost, start a new tmux server there,
-detach from it. Attach from elsewhere and pbpaste still works. Exit
-from the SSH connection (the one that started the tmux process).
-If we used _vprocmgr_detach_from_console, then the children of tmux
-can still access the pasteboard. If we did not call it, then they
-lose access to the pasteboard (the namespace was revoked?).
+After some more subtle testing, I found that (when using
+a hand-rolled daemon()) the call to _vprocmgr_detach_from_console()
+lets the children of tmux (the whole per-session bootstrap
+namespace?) maintain access to the pasteboard even after the session
+initiator has exited. For example: during a GUI login, SSH back to
+localhost, start a new tmux server there, detach from it. Attach
+from elsewhere and pbpaste still works. Exit from the SSH connection
+(the one that started the tmux process). If we used
+_vprocmgr_detach_from_console, then the children of tmux can still
+access the pasteboard. If we did not call it, then they lose access
+to the pasteboard (the namespace was revoked?).
 
 Possible Resolutions
 --------------------
@@ -92,17 +96,17 @@ Possible Resolutions
         bslist` contains "com.apple.pasteboard" (or do the
         equivalent in straight C, if it does not use even more
         private APIs).
-      assume Darwin daemon() is broken for our purposes
+      assume Darwin daemon(3) is broken for our purposes
         use compat/daemon
-          would it be deterministicly used instead of libSystem daemon()?
+          would it be deterministically used instead of libSystem daemon()?
             could #define daemon compat_daemon for compat/daemon.c and server.c
         still need call to _vprocmgr_detach_from_console()
           make osdep_daemon() and call it after (compat) daemon()
 
-  Use system daemon() and find a way to re-attach to the/a user
+  Use system daemon(3) and find a way to re-attach to the/a user
   session.
 
-    Per TN2083, launchd creates non-GUI per-session namepsaces for
+    Per TN2083, launchd creates non-GUI per-session namespaces for
     accepted SSH connections based on the SSH launchd plist having
     a SessionCreate key. Looking at the launchd code, it seems that
     it does this via CreateSession(0,0) from the Security Framework.
@@ -112,3 +116,32 @@ Possible Resolutions
 
     Or maybe _vprocmgr_move_subset_to_user(), like the 10.5(?)
     screen code used?
+
+Current Thinking
+----------------
+
+  Adding calls to undocumented (private?) Apple APIs in tmux seems
+  like a fragile solution. Each release of Mac OS X might break
+  pre-built tmux binaries. The risks of "hard" breaks (tmux errors
+  out on startup) could be eliminated by using dlsym(3) to access
+  the required function(s). Even with that precaution, Apple may
+  break the functions in incompatible ways (they added a parameter
+  to _vprocmgr_move_subset_to_user() in 10.6; the parameter seems to
+  be unused, so we may be able to "get away" with calling it without
+  the extra parameter, but that depends entirely on the calling
+  convention).
+
+  Since tmux's call to daemon(3) effectively isolates it from the
+  per-user bootstrap namespace, there is no way to "reconnect" tmux
+  itself without patching it. But, we can arrange for (some of)
+  tmux's children to be reconnected. Any child can make its own call
+  to _vprocmgr_move_subset_to_user() to reconnect itself (and its
+  future(?) children).
+
+  I have written a wrapper program that calls the private function
+  and then execs into the command specified in its arguments. I have
+  configured tmux's default-command to be "wrapper -l shell" (-l
+  makes the shell's argv[0] be "-shell"). This has successfully let
+  me run pbpaste(1) (and other commands that access the pasteboard)
+  from inside tmux sessions. Not all children of tmux are covered by
+  this workaround, but it seems that it is a "90% solution".
