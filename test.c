@@ -190,8 +190,8 @@ static void show_msg(const char *opt) {
 typedef void (*cmd_func)(const char *opt);
 struct cmd {
     cmd_func func;
-    char str[32];
-    char desc[256];
+    const char * const str;
+    const char * const desc;
 };
 
 static void help(const char *);
@@ -221,7 +221,7 @@ static void help(const char *opt UNUSED) {
         cmd_width = w > cmd_width ? w : cmd_width;
     }
     for (c = all_cmds; c->func; c++) {
-        char *nl, *s = c->desc;
+        const char *nl, *s = c->desc;
         while ((nl = strchr(s, '\n'))) {
             msg("    %*s%.*s", cmd_width, c->str, nl-s, s);
             s = nl+1;
