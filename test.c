@@ -95,11 +95,11 @@ static void move_to_user(const char *opt) {
     if (!(opt && *opt))
         die(3, "move-to-user: requires an option (i.e. move-to-user=10.6)");
 
-    static const char * const move_to_user_fn = "_vprocmgr_move_subset_to_user";
+    static const char move_to_user_fn[] = "_vprocmgr_move_subset_to_user";
     void *f = dlsym(RTLD_NEXT, move_to_user_fn);
     if (!f) die(3, "unable to find %s: %s", move_to_user_fn, dlerror());
 
-    static const char * const session_type = "Background";
+    static const char session_type[] = "Background";
     void *r;
     if (!strcmp(opt, "10.5"))
         r = ((move_to_user_10_5_f)f)(getuid(), session_type);
@@ -112,7 +112,7 @@ static void move_to_user(const char *opt) {
 
 typedef void *(*detach_from_console_f)(unsigned int flags);
 static void detach_from_console(const char *opt UNUSED) {
-    static const char * const detach_fn = "_vprocmgr_detach_from_console";
+    static const char detach_fn[] = "_vprocmgr_detach_from_console";
     void *f = dlsym(RTLD_NEXT, detach_fn);
     if (!f) die(4, "unable to find %s: %s", detach_fn, dlerror());
     if (((detach_from_console_f)f)(0) != NULL)
@@ -154,9 +154,9 @@ static int parse_int(const char *str, char **rest_,
 
 typedef int (*session_create_f)(int, int);
 static void session_create(const char *opt) {
-    static const char * const fw =
+    static const char fw[] =
         "/System/Library/Frameworks/Security.framework/Versions/Current/Security";
-    static const char * const fn = "SessionCreate";
+    static const char fn[] = "SessionCreate";
     if (!(opt && *opt && strchr(opt, ',')))
         die(6, "session-createn needs two args (e.g. 0,0)");
     char *rest;

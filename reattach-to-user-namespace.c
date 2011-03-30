@@ -45,7 +45,7 @@ void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type); /* 10.5 */
 #endif
 
-static char usage_msg[] = "\n"
+static const char usage_msg[] = "\n"
     "    Reattach to the per-user bootstrap namespace in its \"Background\"\n"
     "    session then exec the program with args. If \"-l\" is given,\n"
     "    rewrite the program's argv[0] so that it starts with a '-'.\n";
@@ -91,13 +91,13 @@ int main(int argc, char *argv[]) {
         case 1050:
         case 1060:
             {
-                const char fn[] = "_vprocmgr_move_subset_to_user";
+                static const char fn[] = "_vprocmgr_move_subset_to_user";
                 void *f;
                 if (!(f = dlsym(RTLD_NEXT, fn)))
                     die(2, "unable to find %s: %s", fn, dlerror());
 
                 void *r;
-                const char bg[] = "Background";
+                static const char bg[] = "Background";
                 /*
                  * 10.5 has one fewer args.
                  * Since we are probably using a caller-cleans-up
