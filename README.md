@@ -1,3 +1,37 @@
+# Quick Summary
+
+* Using the Mac OS X programs *pbpaste* and *pbcopy* under *tmux*
+  does not work.  
+  Other services and unpatched builds of *screen* are also affected.
+
+* Certain undocumented, private API functions can fix the problem.
+
+* Because the functions are private, undocumented, and unstable (one
+  acquired an extra argument in 10.6), I think using a small wrapper
+  program might be better than patching *tmux*.
+
+Thus, my wrapper-based workaround:
+
+1. Compile *reattach-to-user-namespace* from this repository.  
+   Make it available in your PATH (or use the absolute pathname in
+   the next step).
+
+       make reattach-to-user-namespace &&
+       cp reattach-to-user-namespace ~/bin
+
+1. Configure *tmux* to use this wrapper program to start the shell
+   for each new window.
+
+   In `.tmux.conf`:
+
+       set-option -g default-command "reattach-to-user-namespace -l zsh"
+
+1. Restart your *tmux* server (or start a new one, or just
+   reconfigure your existing one).
+
+1. Enjoy being able to use *pbpaste*, *pbcopy*, etc. in new shell
+   windows.
+
 # Purpose of These Programs
 
 The programs in this repository were created to diagnose and enable
