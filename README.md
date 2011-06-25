@@ -16,8 +16,8 @@ Thus, my wrapper-based workaround:
    Make it available in your PATH (or use the absolute pathname in
    the next step).
 
-       make reattach-to-user-namespace &&
-       cp reattach-to-user-namespace ~/bin
+        make reattach-to-user-namespace &&
+        cp reattach-to-user-namespace ~/bin
 
 1. Configure *tmux* to use this wrapper program to start the shell
    for each new window.
