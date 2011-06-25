@@ -1,4 +1,6 @@
-ARCHES = i386 ppc x86_64
+# use for ppc support:
+# ARCHES = i386 ppc x86_64
+ARCHES = i386 x86_64
 ARCH_FLAGS = $(ARCHES:%=-arch %)
 
 CFLAGS ?= -Wall -Wextra -ansi -pendantic
