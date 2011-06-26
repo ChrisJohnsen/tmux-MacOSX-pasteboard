@@ -117,8 +117,8 @@ exits.
 Apple (and MacPorts) have already handled *screen*. Apple prevents
 *screen* from losing access to the per-user bootstrap namespace by
 “migrating to [the] background session” ([in 10.5][10] using
-*_vprocmgr_move_subset_to_user*) or “detach[ing] from console”
-([in 10.6][11] using *_vprocmgr_detach_from_console*). For the
+*\_vprocmgr\_move\_subset\_to\_user*) or “detach[ing] from console”
+([in 10.6][11] using *\_vprocmgr\_detach\_from\_console*). For the
 purposes of *screen*, both of these let the *screen* process access
 the per-user bootstrap namespace even after the processes initial
 Mac OS X login session has ended.
@@ -132,19 +132,19 @@ Ideally, we could port Apple’s patch to *tmux*. Practically, there
 are problems with a direct port.
 
 The undocumented, private function used in Apple’s 10.6 patch,
-*_vprocmgr_detach_from_console*, is not effective if called before
+*\_vprocmgr\_detach\_from\_console*, is not effective if called before
 *daemon(3)* (since it forcibly moves the process to the root
 bootstrap namespace); if called after *daemon(3)*, it just returns
 an error.
 
 The undocumented, private function used in Apple’s 10.5 patch,
-*_vprocmgr_move_subset_to_user*, is also available in 10.6 (though
+*\_vprocmgr\_move\_subset\_to\_user*, is also available in 10.6 (though
 an extra parameter has been added to it in 10.6). Again, there is no
 point in calling it before *daemon(3)*, but it is effective if
 called after *daemon(3)*.
 
-The functionality of *_vprocmgr_move_subset_to_user* seems to be
-a sort of superset of that of *_vprocmgr_detach_from_console* in
+The functionality of *\_vprocmgr\_move\_subset\_to\_user* seems to be
+a sort of superset of that of *\_vprocmgr\_detach\_from\_console* in
 that both move to the `"Background"` session, but the former does
 some extra work that can attach to a user namespace even if the
 process has been previously moved out of it.
@@ -154,7 +154,7 @@ function after invoking a custom *daemon* that does not forcibly
 move its resulting process to the root bootstrap namespace (*tmux*
 even already has one).
 
-The fact that the signature of *_vprocmgr_move_subset_to_user*
+The fact that the signature of *\_vprocmgr\_move\_subset\_to\_user*
 changed between 10.5 and 10.6 is a strong indication that Apple sees
 these functions as part of a private API that is liable to change or
 become available in any (major?) release. It seems inappropriate to
