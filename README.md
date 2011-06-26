@@ -16,18 +16,20 @@ Thus, my wrapper-based workaround:
    Make it available in your PATH (or use the absolute pathname in
    the next step).
 
-       make reattach-to-user-namespace &&
-       cp reattach-to-user-namespace ~/bin
+        make reattach-to-user-namespace &&
+        cp reattach-to-user-namespace ~/bin
 
 1. Configure *tmux* to use this wrapper program to start the shell
    for each new window.
 
-   In `.tmux.conf`:
+    In `.tmux.conf`:
 
-       set-option -g default-command "reattach-to-user-namespace -l zsh"
+        set-option -g default-command "reattach-to-user-namespace -l zsh"
 
 1. Restart your *tmux* server (or start a new one, or just
    reconfigure your existing one).
+   
+        tmux kill-server
 
 1. Enjoy being able to use *pbpaste*, *pbcopy*, etc. in new shell
    windows.
