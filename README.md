@@ -177,7 +177,7 @@ cetera. This would require the user to remember to use the wrapper
 it fail then re-run it under the wrapper).
 
 A more automated solution that probably covers most of the problem
-scenarios for most users would be to set *tmux*’s `default-command`
+scenarios for most users would be to set *tmux*&rsquo;s `default-command`
 option so that new windows start shells via the wrapper by default.
 The major area this would not cover would be commands given directly
 to `new-session` and `new-window` (there are some other commands
