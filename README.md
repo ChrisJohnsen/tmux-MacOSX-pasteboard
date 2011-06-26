@@ -28,7 +28,10 @@ Thus, my wrapper-based workaround:
 
 1. Restart your *tmux* server (or start a new one, or just
    reconfigure your existing one).
-   
+
+    To kill your existing *tmux* server (and everything running
+    “inside” it!):
+
         tmux kill-server
 
 1. Enjoy being able to use *pbpaste*, *pbcopy*, etc. in new shell
