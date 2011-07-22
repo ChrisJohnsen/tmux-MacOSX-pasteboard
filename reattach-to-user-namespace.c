@@ -41,7 +41,7 @@
 #include "msg.h"
 
 #if 0
-void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type, uint64_t flags); /* 10.6, 10.7 */
+void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type, uint64_t flags); /* 10.6 */
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type); /* 10.5 */
 #endif
 
@@ -82,15 +82,14 @@ int main(int argc, char *argv[]) {
     if (os < 1050) {
         warn("unsupported old OS, trying as if it were 10.5");
         os = 1050;
-    } else if (os > 1070) {
-        warn("unsupported new OS, trying as if it were 10.7");
-        os = 1070;
+    } else if (os > 1060) {
+        warn("unsupported new OS, trying as if it were 10.6");
+        os = 1060;
     }
 
     switch(os) {
         case 1050:
         case 1060:
-        case 1070:
             {
                 static const char fn[] = "_vprocmgr_move_subset_to_user";
                 void *f;
@@ -110,7 +109,7 @@ int main(int argc, char *argv[]) {
                     void *(*func)(uid_t, const char *) = f;
                     r = func(getuid(), bg);
                 }
-                else if (os == 1060 || os == 1070) {
+                else if (os == 1060) {
                     void *(*func)(uid_t, const char *, uint64_t) = f;
                     r = func(getuid(), bg, 0);
                 } else
