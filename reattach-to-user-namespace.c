@@ -79,6 +79,15 @@ int main(int argc, char *argv[]) {
 
     free(whole);
 
+    /*
+     * change the 'os' variable to represent the "reattach variation"
+     * instead of the major OS release
+     *
+     * < 10.5 => 1050 with warning
+     *   10.5 => 1050
+     *   10.6 => 1060
+     * > 10.6 => 1060 with warning
+     */
     if (os < 1050) {
         warn("unsupported old OS, trying as if it were 10.5");
         os = 1050;
@@ -113,7 +122,7 @@ int main(int argc, char *argv[]) {
                     void *(*func)(uid_t, const char *, uint64_t) = f;
                     r = func(getuid(), bg, 0);
                 } else
-                    die(2, "unexpected OS, giving up");
+                    die(2, "BUG: unhandled reattach variation: %u", os);
 
                 if (r)
                     die(2, "%s failed", fn);
