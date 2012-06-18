@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Chris Johnsen <chris_johnsen@pobox.com>
+ * Copyright (c) 2011-2012, Chris Johnsen <chris_johnsen@pobox.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -87,15 +87,16 @@ int main(int argc, char *argv[]) {
      *   10.5 => 1050
      *   10.6 => 1060
      *   10.7 => 1060
+     *   10.8 => 1060
      * > 10.7 => 1060 with warning
      */
-    if (1060 <= os && os <= 1070)
+    if (1060 <= os && os <= 1080)
         os = 1060;
     else if (os < 1050) {
         warn("unsupported old OS, trying as if it were 10.5");
         os = 1050;
     } else if (os > 1060) {
-        warn("unsupported new OS, trying as if it were 10.6-10.7");
+        warn("unsupported new OS, trying as if it were 10.6-10.8");
         os = 1060;
     }
 
