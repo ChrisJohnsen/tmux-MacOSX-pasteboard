@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011, Chris Johnsen <chris_johnsen@pobox.com>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -9,12 +9,12 @@
  *     1. Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
- * 
+ *
  *     2. Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     strsep(&rest, ".");
     if (whole && *whole && whole != rest) {
         int major = atoi(whole);
-        if (major >= 6) /* 10.2 -- 10.7 */
+        if (major >= 6) /* 10.2 -- 10.8 */
             os = 1000 + (major-4) * 10;
         else /* 10.1, 10.0 and prior betas/previews */
             os = 1000;
@@ -87,15 +87,16 @@ int main(int argc, char *argv[]) {
      *   10.5 => 1050
      *   10.6 => 1060
      *   10.7 => 1060
-     * > 10.7 => 1060 with warning
+     *   10.8 => 1060
+     * > 10.8 => 1060 with warning
      */
-    if (1060 <= os && os <= 1070)
+    if (1060 <= os && os <= 1080)
         os = 1060;
     else if (os < 1050) {
         warn("unsupported old OS, trying as if it were 10.5");
         os = 1050;
     } else if (os > 1060) {
-        warn("unsupported new OS, trying as if it were 10.6-10.7");
+        warn("unsupported new OS, trying as if it were 10.6-10.8");
         os = 1060;
     }
 
