@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     strsep(&rest, ".");
     if (whole && *whole && whole != rest) {
         int major = atoi(whole);
-        if (major >= 6) /* 10.2 -- 10.7 */
+        if (major >= 6) /* 10.2 and newer */
             os = 1000 + (major-4) * 10;
         else /* 10.1, 10.0 and prior betas/previews */
             os = 1000;
@@ -83,12 +83,12 @@ int main(int argc, char *argv[]) {
      * change the 'os' variable to represent the "reattach variation"
      * instead of the major OS release
      *
-     * < 10.5 => 1050 with warning
+     *  older => 1050 with warning
      *   10.5 => 1050
      *   10.6 => 1060
      *   10.7 => 1060
      *   10.8 => 1060
-     * > 10.7 => 1060 with warning
+     *  newer => 1060 with warning
      */
     if (1060 <= os && os <= 1080)
         os = 1060;
