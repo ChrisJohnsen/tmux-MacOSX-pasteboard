@@ -147,9 +147,8 @@ int main(int argc, char *argv[]) {
             break;
     }
 
-    int arg = 1;
     char **newargs = NULL;
-    const char *file = argv[arg];
+    const char *file = argv[1];
     if (login) {
         /*
          * For their argv[0], take the bit of file after the
@@ -166,16 +165,15 @@ int main(int argc, char *argv[]) {
             strcpy(arg0+1, file);
 
         /* use the rest of the args as they are */
-        int ofs = arg;
-        newargs = malloc(sizeof(*newargs) * (argc-ofs+1));
-        newargs[arg-ofs] = arg0;
-        arg++;
+        newargs = malloc(sizeof(*newargs) * (argc));
+        newargs[0] = arg0;
+        int arg = 2;
         for(; arg < argc; arg++)
-            newargs[arg-ofs] = argv[arg];
-        newargs[arg-ofs] = NULL;
+            newargs[arg-1] = argv[arg];
+        newargs[arg-1] = NULL;
     }
 
-    if (execvp(file, newargs ? newargs : argv+arg) < 0)
+    if (execvp(file, newargs ? newargs : argv+1) < 0)
         die_errno(3, "execv failed");
 
     if (newargs) {
