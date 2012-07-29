@@ -51,6 +51,16 @@ static const char usage_msg[] = "\n"
     "    rewrite the program's argv[0] so that it starts with a '-'.\n";
 
 int main(int argc, char *argv[]) {
+    unsigned int login = 0;
+
+    if (argc > 1) {
+        if (!strcmp(argv[1], "-l")) {
+            login = 1;
+            argv[1] = argv[0];
+            argv++;
+            argc--;
+        }
+    }
     if (argc < 2)
         die(1, "usage: %s [-l] <program> [args...]\n%s", argv[0], usage_msg);
 
@@ -140,8 +150,7 @@ int main(int argc, char *argv[]) {
     int arg = 1;
     char **newargs = NULL;
     const char *file = argv[arg];
-    if (!strcmp(file, "-l")) {
-        file = argv[++arg];
+    if (login) {
         /*
          * For their argv[0], take the bit of file after the
          * last slash (the whole thing if there is no slash
