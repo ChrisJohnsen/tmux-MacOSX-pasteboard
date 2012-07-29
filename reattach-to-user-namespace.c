@@ -51,7 +51,7 @@ static const char usage_msg[] = "\n"
     "    rewrite the program's argv[0] so that it starts with a '-'.\n";
 
 int main(int argc, char *argv[]) {
-    unsigned int login = 0;
+    unsigned int login = 0, usage = 0;
 
     if (argc > 1) {
         if (!strcmp(argv[1], "-l")) {
@@ -59,10 +59,15 @@ int main(int argc, char *argv[]) {
             argv[1] = argv[0];
             argv++;
             argc--;
+        } else if (*argv[1] == '-') {
+            warn("unkown option: %s", argv[1]);
+            usage = 2;
         }
     }
     if (argc < 2)
-        die(1, "usage: %s [-l] <program> [args...]\n%s", argv[0], usage_msg);
+        usage = 1;
+    if (usage)
+        die(usage, "usage: %s [-l] <program> [args...]\n%s", argv[0], usage_msg);
 
     unsigned int os = 0;
 
