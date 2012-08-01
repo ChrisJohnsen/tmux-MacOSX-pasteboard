@@ -40,11 +40,14 @@
 void vfmsg(FILE *f,
         const char *pre, const char *suf, const char *fmt,
         va_list ap) {
-    int prelen = 0, fmtlen = 0, suflen = 0;
+    int prelen = 0, fmtlen = 0, suflen = 0, proglen = 0;
+    char prog[30] = "[reattach-to-user-namespace] ";
+    proglen = strlen(prog);
     if (pre) prelen = strlen(pre);
     if (fmt) fmtlen = strlen(fmt);
     if (suf) suflen = strlen(suf);
     char *newfmt = malloc(
+            proglen*2 +
             prelen*2 + /* %-doubled pre */
             fmtlen +
             2 + /* ':' and SP */
@@ -55,6 +58,10 @@ void vfmsg(FILE *f,
         goto finish;
 
     char *newfmt_end = newfmt;
+    if(proglen) {
+      strcpy(newfmt_end, prog);
+      newfmt_end += proglen;
+    }
     if (prelen)
         while(*pre)
             if ((*newfmt_end++ = *pre++) == '%')
