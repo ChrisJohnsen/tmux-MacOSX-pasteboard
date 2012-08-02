@@ -114,10 +114,10 @@ int main(int argc, char *argv[]) {
     if (1060 <= os && os <= 1080)
         os = 1060;
     else if (os < 1050) {
-        warn("unsupported old OS, trying as if it were 10.5");
+        warn("%s: unsupported old OS, trying as if it were 10.5", argv[0]);
         os = 1050;
     } else if (os > 1060) {
-        warn("unsupported new OS, trying as if it were 10.6-10.8");
+        warn("%s: unsupported new OS, trying as if it were 10.6-10.8", argv[0]);
         os = 1060;
     }
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
             break;
        default:
 reattach_failed:
-            warn("unable to reattach");
+            warn("%s: unable to reattach", argv[0]);
             break;
     }
 
@@ -199,7 +199,7 @@ reattach_failed:
 
 exec_it:
     if (execvp(file, newargs ? newargs : argv+1) < 0)
-        die_errno(3, "execv failed");
+        die_errno(3, "%s: execv failed", argv[0]);
 
     if (newargs) {
         free(newargs[0]);
