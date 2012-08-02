@@ -102,6 +102,15 @@ void warn(const char *fmt, ...) {
     va_end(ap);
 }
 
+void warn_errno(const char *fmt, ...) {
+    int err = errno; /* just in case it gets clobbered */
+    va_list ap;
+    va_start(ap, fmt);
+    vmsg("warning: ", strerror(err), fmt, ap);
+    va_end(ap);
+    errno = err;
+}
+
 void die(int ev, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);

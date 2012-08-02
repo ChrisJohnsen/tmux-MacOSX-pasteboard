@@ -72,14 +72,20 @@ int main(int argc, char *argv[]) {
     unsigned int os = 0;
 
     struct utsname u;
-    if (uname(&u))
-        die_errno(2, "uname failed");
-    if (strcmp(u.sysname, "Darwin"))
+    if (uname(&u)) {
+        warn_errno("uname failed");
+        goto reattach_failed;
+    }
+    if (strcmp(u.sysname, "Darwin")) {
         warn("unsupported OS sysname: %s", u.sysname);
+        goto reattach_failed;
+    }
 
     char *rest, *whole = strdup(u.release);
-    if (!whole)
-        die_errno(2, "strdup failed");
+    if (!whole) {
+        warn_errno("strdup failed");
+        goto reattach_failed;
+    }
     rest = whole;
     strsep(&rest, ".");
     if (whole && *whole && whole != rest) {
@@ -121,8 +127,10 @@ int main(int argc, char *argv[]) {
             {
                 static const char fn[] = "_vprocmgr_move_subset_to_user";
                 void *f;
-                if (!(f = dlsym(RTLD_NEXT, fn)))
-                    die(2, "unable to find %s: %s", fn, dlerror());
+                if (!(f = dlsym(RTLD_NEXT, fn))) {
+                    warn("unable to find %s: %s", fn, dlerror());
+                    goto reattach_failed;
+                }
 
                 void *r;
                 static const char bg[] = "Background";
@@ -140,15 +148,20 @@ int main(int argc, char *argv[]) {
                 else if (os == 1060) {
                     void *(*func)(uid_t, const char *, uint64_t) = f;
                     r = func(getuid(), bg, 0);
-                } else
-                    die(2, "BUG: unhandled reattach variation: %u", os);
+                } else {
+                    warn("BUG: unhandled reattach variation: %u", os);
+                    goto reattach_failed;
+                }
 
-                if (r)
-                    die(2, "%s failed", fn);
+                if (r) {
+                    warn("%s failed", fn);
+                    goto reattach_failed;
+                }
             }
             break;
        default:
-            die(2, "unsupported OS, giving up");
+reattach_failed:
+            warn("unable to reattach");
             break;
     }
 
