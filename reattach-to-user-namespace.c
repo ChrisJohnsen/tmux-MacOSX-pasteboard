@@ -175,6 +175,8 @@ reattach_failed:
          * it with '-'.
          */
         char *arg0 = malloc(strlen(file) + 2);
+        if (!arg0)
+            goto exec_it;
         *arg0 = '-';
         char *slash = strrchr(file, '/');
         if (slash && slash[1])
@@ -184,6 +186,10 @@ reattach_failed:
 
         /* use the rest of the args as they are */
         newargs = malloc(sizeof(*newargs) * (argc));
+        if (!newargs) {
+            free(arg0);
+            goto exec_it;
+        }
         newargs[0] = arg0;
         int arg = 2;
         for(; arg < argc; arg++)
@@ -191,6 +197,7 @@ reattach_failed:
         newargs[arg-1] = NULL;
     }
 
+exec_it:
     if (execvp(file, newargs ? newargs : argv+1) < 0)
         die_errno(3, "execv failed");
 
