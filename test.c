@@ -243,8 +243,10 @@ static void run_cmd(const char *cmd) {
     struct cmd *c;
     for (c = all_cmds; c->func; c++)
         if (!strncmp(cmd, c->str, cmd_len) &&
-                c->str[cmd_len] == '\0')
-            return c->func(opt);
+                c->str[cmd_len] == '\0') {
+            c->func(opt);
+            return;
+        }
     die(1, "unknown command: %s (try help)", cmd);
 }
 

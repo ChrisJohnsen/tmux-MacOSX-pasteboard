@@ -3,7 +3,7 @@
 ARCHES = i386 x86_64
 ARCH_FLAGS = $(ARCHES:%=-arch %)
 
-CFLAGS ?= -Wall -Wextra -ansi -pedantic
+CFLAGS ?= -Wall -Wextra -ansi -pedantic -std=c99
 CFLAGS += $(ARCH_FLAGS) -mmacosx-version-min=10.5
 LDFLAGS += $(ARCH_FLAGS)
 

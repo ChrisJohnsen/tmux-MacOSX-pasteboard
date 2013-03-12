@@ -126,8 +126,8 @@ int main(int argc, char *argv[]) {
         case 1060:
             {
                 static const char fn[] = "_vprocmgr_move_subset_to_user";
-                void *f;
-                if (!(f = dlsym(RTLD_NEXT, fn))) {
+                void *(*f)();
+                if (!(f = (void *(*)()) dlsym(RTLD_NEXT, fn))) {
                     warn("unable to find %s: %s", fn, dlerror());
                     goto reattach_failed;
                 }
