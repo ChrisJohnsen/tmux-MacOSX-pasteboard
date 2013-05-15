@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, Chris Johnsen <chris_johnsen@pobox.com>
+ * Copyright (c) 2011-2013, Chris Johnsen <chris_johnsen@pobox.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,9 @@
 
 #include "msg.h"
 
+static const char version[] = "2.1";
+static const char supported_oses[] = "OS X 10.5-10.8";
+
 #if 0
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type, uint64_t flags); /* 10.6 */
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type); /* 10.5 */
@@ -59,6 +62,11 @@ int main(int argc, char *argv[]) {
             argv[1] = argv[0];
             argv++;
             argc--;
+        } else if (!strcmp(argv[1], "-v") ||
+                !strcmp(argv[1], "--version")) {
+            printf("%s version %s\n    Supported OSes: %s\n",
+                    argv[0], version, supported_oses);
+            exit(0);
         } else if (*argv[1] == '-') {
             warn("unkown option: %s", argv[1]);
             usage = 2;
