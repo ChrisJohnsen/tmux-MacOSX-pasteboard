@@ -40,8 +40,8 @@
 
 #include "msg.h"
 
-static const char version[] = "2.1";
-static const char supported_oses[] = "OS X 10.5-10.8";
+static const char version[] = "2.2";
+static const char supported_oses[] = "OS X 10.5-10.9";
 
 #if 0
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type, uint64_t flags); /* 10.6 */
@@ -117,15 +117,16 @@ int main(int argc, char *argv[]) {
      *   10.6 => 1060
      *   10.7 => 1060
      *   10.8 => 1060
+     *   10.9 => 1060
      *  newer => 1060 with warning
      */
-    if (1060 <= os && os <= 1080)
+    if (1060 <= os && os <= 1090)
         os = 1060;
     else if (os < 1050) {
         warn("%s: unsupported old OS, trying as if it were 10.5", argv[0]);
         os = 1050;
     } else if (os > 1060) {
-        warn("%s: unsupported new OS, trying as if it were 10.6-10.8", argv[0]);
+        warn("%s: unsupported new OS, trying as if it were 10.6-10.9", argv[0]);
         os = 1060;
     }
 
