@@ -25,6 +25,10 @@ Thus, my wrapper-based workaround:
     In `.tmux.conf`:
 
         set-option -g default-command "reattach-to-user-namespace -l zsh"
+        
+    Or for users who use the same `.tmux.conf` on different operating systems:
+    
+        set -g default-command "command -v reattach-to-user-namespace > /dev/null && exec reattach-to-user-namespace -l ${SHELL} || exec ${SHELL}"
 
 1. Restart your *tmux* server (or start a new one, or just
    reconfigure your existing one).
