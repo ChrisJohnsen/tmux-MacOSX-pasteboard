@@ -19,6 +19,16 @@ Thus, my wrapper-based workaround:
         make reattach-to-user-namespace &&
         cp reattach-to-user-namespace ~/bin
 
+   Alternatively, you can install it with [*MacPorts*][MacPorts] or
+   [*Homebrew*][Homebrew]:
+
+        port install tmux-pasteboard
+
+        brew install reattach-to-user-namespace
+
+[MacPorts]: http://www.macports.org
+[Homebrew]: http://brew.sh
+
 1. Configure *tmux* to use this wrapper program to start the shell
    for each new window.
 
