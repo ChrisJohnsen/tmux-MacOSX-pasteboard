@@ -26,6 +26,10 @@ Thus, my wrapper-based workaround:
 
         set-option -g default-command "reattach-to-user-namespace -l zsh"
 
+    See the file `Usage.md` for other configuration and usage
+    techniques (conditional use for cross-platform configurations,
+    fine-grained usage, etc.)
+
 1. Restart your *tmux* server (or start a new one, or just
    reconfigure your existing one).
 
