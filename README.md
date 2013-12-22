@@ -57,6 +57,9 @@ The programs in this repository were created to diagnose and enable
 reliable access to the Mac OS X pasteboard for programs run under
 [*tmux*][1] and unmodified versions of [*screen*][2].
 
+See the “Beyond Pasteboard Access” section of the `Usage.md` file
+for other programs that benefit from the wrapper.
+
 [1]: http://tmux.sourceforge.net/
 [2]: http://www.gnu.org/software/screen/
 

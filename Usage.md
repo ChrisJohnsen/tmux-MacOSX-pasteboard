@@ -34,7 +34,9 @@ also require different syntax.
 ## Fine-Grained Usage
 
 Instead of using `default-command` to “wrap” your top-level shells,
-you can instead use the wrapper on just the tools that need it.
+you can instead use the wrapper on just the tools that need it (see
+“Beyond Pasteboard Access” (below) for other commands that may also
+need the wrapper).
 
 You might want to adopt this approach if part of your shell
 initialization takes a long time to run: the `default-command` will
@@ -66,3 +68,81 @@ Similarly, for the `copy-pipe` command (new in *tmux* 1.8):
 
     bind-key -t    vi-copy y   'reattach-to-user-namespace pbcopy'
     bind-key -t emacs-copy M-w 'reattach-to-user-namespace pbcopy'
+
+
+
+# Beyond Pasteboard Access
+
+Because the fix applied by the wrapper program is not limited to
+just pasteboard access, there are other bugs/issues/problems that
+come up when running under *tmux* that the wrapper can help
+alleviate.
+
+* `nohup`
+
+    The *nohup* program aborts if it cannot “detach from console”.
+    Normally, processes running “inside” *tmux* (on the other side
+    of a daemon(3) call) are already detached; the wrapper
+    reattaches so that *nohup* can successfully detach itself.
+
+    *nohup* does generate an error message if it aborts due to
+    failing to detach, but it happens after the output has been
+    redirected so it ends up in the `nohup.out` file (or wherever
+    you sent stdout):
+
+        nohup: can't detach from console: Undefined error: 0
+
+    References: [problem using nohup within tmux on OSX 10.6][ml nohup]
+
+[ml nohup]: http://thread.gmane.org/gmane.comp.terminal-emulators.tmux.user/4450
+
+* The `export`, `getenv`, `setenv` subcommands of `launchctl`
+
+    Notably, the `setenv` subcommand will issue an error when it is
+    run from a “detached” context:
+
+        launch_msg("SetUserEnvironment"): Socket is not connected
+
+    The `getenv` and `export` commands will simply not have access
+    to some variables that have otherwise been configured in the
+    user’s *launchd* instance.
+
+    References: [tmux “Socket is not connected” error on OS X Lion][so setenv]
+
+[so setenv]: http://stackoverflow.com/q/10193561/193688
+
+* `subl -w` `subl --wait`
+
+[su subl]: http://superuser.com/q/522055/14827
+[so subl]: http://stackoverflow.com/q/13917095/193688
+
+    The *subl* command from *Sublime Text* can be used to open files
+    in the GUI window from a shell command line. The `-w` (or
+    `--wait`) option tells it to wait for the file to be closed in
+    the editor before exiting the `subl` command.
+
+    Whatever mechanism *Sublime Text* uses to coordinate between the
+    `subl` instance and the main *Sublime Text* instance is affected
+    by being “detached”. The result is that `subl -w` commands
+    issued inside *tmux* will not exit after the file is closed in
+    the GUI. The wrapper lets the `subl` command successfully
+    synchronize with the GUI instance.
+
+    References: ['subl -w' doesn't ever un-block when running under tmux on OS X][su subl] and [subl --wait doesn't work within tmux][so subl]
+
+* Retina rendering of apps launched under *tmux* (10.9 Mavericks)
+
+    From feedback in [issue #22][issue 22]:
+
+[issue 22]: https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard/issues/22
+
+    > Under Mavericks, applications launched from inside a tmux
+    > session cannot enable retina rendering (for reasons I don't
+    > understand -- this worked under Mountain Lion). If the shell
+    > inside the tmux session is reattached to the user namespace,
+    > then applications launched from the reattached shell do enable
+    > retina rendering when appropriate.
+
+
+There may also be other contexts (aside from “inside *tmux*”) where
+these same problems occur, but I have not yet heard of any.
