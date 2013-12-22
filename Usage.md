@@ -30,3 +30,39 @@ shell is not POSIX compliant (old-style `/bin/sh`, a *csh* variant,
 -v` (or if it does something unrelated that returns the wrong exit
 value), then you might try using `which` instead. Exotic shells may
 also require different syntax.
+
+## Fine-Grained Usage
+
+Instead of using `default-command` to “wrap” your top-level shells,
+you can instead use the wrapper on just the tools that need it.
+
+You might want to adopt this approach if part of your shell
+initialization takes a long time to run: the `default-command` will
+start your shell twice (once to process the `default-command`, and
+once more for the final, interactive shell that is started by the
+`default-command`). For example if your SHELL is *zsh*, then your
+`.zshenv` (if you have one) will be run twice (the other
+initialization files will only be run once).
+
+For example, you could leave your shell “detached” and run
+`reattach-to-user-namespace pbpaste` to read from the pasteboard. If
+you take this approach, you may want to use a small script, shell
+alias, or shell function to supply a shorter name for the wrapper
+program (or wrap the individual commands—the
+`reattach-to-user-namespace` *Homebrew* recipe has some support for
+this).
+
+You will also need to apply this fine-grained “wrapping” if you want
+to have *tmux* directly run commands that need to be reattached.
+
+For example, you might use bindings like the following to write
+a *tmux* buffer to the OS X pasteboard or to paste the OS X
+pasteboard into the current *tmux* pane.
+
+    bind-key C-c run-shell 'tmux save-buffer - | reattach-to-user-namespace pbcopy'
+    bind-key C-v run-shell 'reattach-to-user-namespace pbpaste | tmux load-buffer - \; paste-buffer -d'
+
+Similarly, for the `copy-pipe` command (new in *tmux* 1.8):
+
+    bind-key -t    vi-copy y   'reattach-to-user-namespace pbcopy'
+    bind-key -t emacs-copy M-w 'reattach-to-user-namespace pbcopy'
