@@ -16,7 +16,28 @@ shell will also be properly attached.
 
 Some users like to share identical configuration files (including
 `.tmux.conf`) with systems where the wrapper program is not
-available (e.g. same files on both OS X and Linux). The basic
+available (e.g. same files on both OS X and Linux). Starting with
+*tmux* 1.9, it is safe to use `if-shell` to conditionally configure
+the use of the wrapper program:
+
+    if-shell 'test "$(uname -s)" = Darwin' 'set-option -g default-command "exec reattach-to-user-namespace -l zsh"'
+
+Or, if you have other platform specific configuration, you can
+conditionally source another file.
+
+In `.tmux.conf`:
+
+    if-shell 'test "$(uname -s)" = Darwin' 'source-file ~/.tmux-osx.conf'
+
+Then in `.tmux-osx.conf`, include the `default-command` setting and
+any other bits of OS X configuration (e.g. the buffer-to-pasteboard
+bindings shown below):
+
+    set-option -g default-command 'exec reattach-to-user-namespace -l zsh'
+
+With *tmux* 1.8 and earlier, the above configuration has a race
+condition (the `if-shell` command is run in the background) and/or
+does not affect the initial session/window/pane. Instead, the basic
 `default-command` can be extended with a bit of shell code to
 conditionally use the wrapper only where it is present:
 
