@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013, Chris Johnsen <chris_johnsen@pobox.com>
+ * Copyright (c) 2011-2014, Chris Johnsen <chris_johnsen@pobox.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
                 void *r;
                 static const char bg[] = "Background";
                 /*
-                 * 10.5 has one fewer args.
+                 * 10.5 has one fewer arg.
                  * Since we are probably using a caller-cleans-up
                  * calling convention, we could probably always just
                  * call it with the extra arg, but we might as well
