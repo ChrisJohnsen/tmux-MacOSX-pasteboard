@@ -98,10 +98,9 @@ int main(int argc, char *argv[]) {
     strsep(&rest, ".");
     if (whole && *whole && whole != rest) {
         int major = atoi(whole);
+        os = 100000;    /* 10.1, 10.0 and prior betas/previews */
         if (major >= 6) /* 10.2 and newer */
-            os = 1000 + (major-4) * 10;
-        else /* 10.1, 10.0 and prior betas/previews */
-            os = 1000;
+            os += (major-4) * 100;
     }
     else
         warn("unparsable major release number: '%s'", u.release);
@@ -112,27 +111,27 @@ int main(int argc, char *argv[]) {
      * change the 'os' variable to represent the "reattach variation"
      * instead of the major OS release
      *
-     *  older => 1050 with warning
-     *   10.5 => 1050
-     *   10.6 => 1060
-     *   10.7 => 1060
-     *   10.8 => 1060
-     *   10.9 => 1060
-     *  newer => 1060 with warning
+     *  older => 100500 with warning
+     *   10.5 => 100500
+     *   10.6 => 100600
+     *   10.7 => 100600
+     *   10.8 => 100600
+     *   10.9 => 100600
+     *  newer => 100600 with warning
      */
-    if (1060 <= os && os <= 1090)
-        os = 1060;
-    else if (os < 1050) {
+    if (100600 <= os && os <= 100900)
+        os = 100600;
+    else if (os < 100500) {
         warn("%s: unsupported old OS, trying as if it were 10.5", argv[0]);
-        os = 1050;
-    } else if (os > 1060) {
+        os = 100500;
+    } else if (os > 100600) {
         warn("%s: unsupported new OS, trying as if it were 10.6-10.9", argv[0]);
-        os = 1060;
+        os = 100600;
     }
 
     switch(os) {
-        case 1050:
-        case 1060:
+        case 100500:
+        case 100600:
             {
                 static const char fn[] = "_vprocmgr_move_subset_to_user";
                 void *(*f)();
@@ -150,11 +149,11 @@ int main(int argc, char *argv[]) {
                  * call it with the extra arg, but we might as well
                  * do things properly.
                  */
-                if (os == 1050) {
+                if (os == 100500) {
                     void *(*func)(uid_t, const char *) = f;
                     r = func(getuid(), bg);
                 }
-                else if (os == 1060) {
+                else if (os == 100600) {
                     void *(*func)(uid_t, const char *, uint64_t) = f;
                     r = func(getuid(), bg, 0);
                 } else {
