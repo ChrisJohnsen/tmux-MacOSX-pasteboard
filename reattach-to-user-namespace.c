@@ -38,6 +38,9 @@
 #include <unistd.h>    /* execvp   */
 #include <sys/utsname.h> /* uname  */
 
+#include <mach/mach.h>
+#include <bootstrap.h>
+
 #include "msg.h"
 
 static const char version[] = "2.2";
@@ -117,10 +120,14 @@ int main(int argc, char *argv[]) {
      *   10.7 => 100600
      *   10.8 => 100600
      *   10.9 => 100600
+     *   10.10=> 101000
      *  newer => 100600 with warning
      */
     if (100600 <= os && os <= 100900)
         os = 100600;
+    else if (os == 101000) {
+        // do nothing
+    }
     else if (os < 100500) {
         warn("%s: unsupported old OS, trying as if it were 10.5", argv[0]);
         os = 100500;
@@ -165,6 +172,55 @@ int main(int argc, char *argv[]) {
                     warn("%s failed", fn);
                     goto reattach_failed;
                 }
+            }
+            break;
+       case 101000:
+            {
+#define FIND_SYMBOL(NAME, RET, SIG) \
+                static const char fn_ ## NAME [] = # NAME; \
+                typedef RET (*ft_ ## NAME) SIG; \
+                ft_ ## NAME f_ ## NAME; \
+                if (!(f_ ## NAME = (ft_ ## NAME)dlsym(RTLD_NEXT, fn_ ## NAME))) { \
+                    warn("unable to find %s: %s", fn_ ## NAME, dlerror()); \
+                    goto reattach_failed; \
+                }
+
+                FIND_SYMBOL(vproc_swap_integer, void *, (void *, int, int64_t *, int64_t *))
+                FIND_SYMBOL(bootstrap_get_root, kern_return_t, (mach_port_t, mach_port_t *))
+                FIND_SYMBOL(bootstrap_look_up_per_user, kern_return_t, (mach_port_t, const char *, uid_t, mach_port_t *))
+
+#undef FIND_SYMBOL
+
+                int64_t ldpid, lduid;
+                if (f_vproc_swap_integer(NULL, 4 /*VPROC_GSK_MGR_PID*/, NULL, &ldpid) != 0) {
+                    warn("failed to get VPROC_GSK_MGR_PID");
+                    goto reattach_failed;
+                }
+                if (f_vproc_swap_integer(NULL, 3 /*VPROC_GSK_MGR_UID*/, NULL, &lduid) != 0) {
+                    warn("failed to get VPROC_GSK_MGR_UID");
+                    goto reattach_failed;
+                }
+
+                mach_port_t puc = MACH_PORT_NULL;
+                mach_port_t rootbs = MACH_PORT_NULL;
+                if (f_bootstrap_get_root(bootstrap_port, &rootbs) != KERN_SUCCESS) {
+                    warn("%s failed", fn_bootstrap_get_root);
+                    goto reattach_failed;
+                }
+                if (f_bootstrap_look_up_per_user(rootbs, NULL, getuid(), &puc) != KERN_SUCCESS) {
+                    warn("%s failed", fn_bootstrap_look_up_per_user);
+                    goto reattach_failed;
+                }
+
+                if (task_set_bootstrap_port(mach_task_self(), puc) != KERN_SUCCESS) {
+                    warn("task_set_bootstrap_port failed");
+                    goto reattach_failed;
+                }
+                if (mach_port_deallocate(mach_task_self(), bootstrap_port) != KERN_SUCCESS) {
+                    warn("mach_port_deallocate failed");
+                    goto reattach_failed;
+                }
+                bootstrap_port = puc;
             }
             break;
        default:
