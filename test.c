@@ -37,6 +37,7 @@
 #include <dlfcn.h>
 
 #include "msg.h"
+#include "move_to_user_namespace.h"
 
 #define UNUSED __attribute__ ((unused))
 
@@ -86,28 +87,20 @@ static void show_pid(const char *opt) {
     msg("pid: %d (%s)", getpid(), opt ? opt : "");
 }
 
-#include <stdint.h> /* uint64_t */
-typedef void *(*move_to_user_10_5_f)
-    (uid_t target_user, const char *session_type);
-typedef void *(*move_to_user_10_6_f)
-    (uid_t target_user, const char *session_type, uint64_t flags);
 static void move_to_user(const char *opt) {
     if (!(opt && *opt))
         die(3, "move-to-user: requires an option (i.e. move-to-user=10.6)");
 
-    static const char move_to_user_fn[] = "_vprocmgr_move_subset_to_user";
-    void *f = dlsym(RTLD_NEXT, move_to_user_fn);
-    if (!f) die(3, "unable to find %s: %s", move_to_user_fn, dlerror());
-
-    static const char session_type[] = "Background";
-    void *r;
+    int r;
     if (!strcmp(opt, "10.5"))
-        r = ((move_to_user_10_5_f)f)(getuid(), session_type);
+        r = move_to_user_namespace(100500);
     else if (!strcmp(opt, "10.6"))
-        r = ((move_to_user_10_6_f)f)(getuid(), session_type, 0);
+        r = move_to_user_namespace(100600);
+    else if (!strcmp(opt, "10.10"))
+        r = move_to_user_namespace(101000);
     else
         die(3, "move-to-user: unkown option: %s", opt);
-    if (r) die(3, "%s failed", move_to_user_fn);
+    if (r) die(3, "move_to_user_namespace failed");
 }
 
 typedef void *(*detach_from_console_f)(unsigned int flags);
@@ -209,7 +202,8 @@ static struct cmd all_cmds[] = {
     { do_system,      "system", "=<cmd>    system(cmd)"},
     { move_to_user,   "move-to-user",
                                 "=10.5     _vprocmgr_move_subset_to_user(uid,\"Background\")\n"
-                                "=10.6         call with extra arg == 0" },
+                                "=10.6         call with extra arg == 0\n"
+                                "=10.10    custom implementation simulating _vprocmgr_move_subset_to_user" },
     { session_create, "session-create",
                                 "=<a>,<b>  SessionCreate(a,b) (numeric a and b)" },
     { help,           "help",   "          show this help text" },
