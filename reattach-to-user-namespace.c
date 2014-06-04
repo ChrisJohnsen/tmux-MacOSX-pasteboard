@@ -185,21 +185,10 @@ int main(int argc, char *argv[]) {
                     goto reattach_failed; \
                 }
 
-                FIND_SYMBOL(vproc_swap_integer, void *, (void *, int, int64_t *, int64_t *))
                 FIND_SYMBOL(bootstrap_get_root, kern_return_t, (mach_port_t, mach_port_t *))
                 FIND_SYMBOL(bootstrap_look_up_per_user, kern_return_t, (mach_port_t, const char *, uid_t, mach_port_t *))
 
 #undef FIND_SYMBOL
-
-                int64_t ldpid, lduid;
-                if (f_vproc_swap_integer(NULL, 4 /*VPROC_GSK_MGR_PID*/, NULL, &ldpid) != 0) {
-                    warn("failed to get VPROC_GSK_MGR_PID");
-                    goto reattach_failed;
-                }
-                if (f_vproc_swap_integer(NULL, 3 /*VPROC_GSK_MGR_UID*/, NULL, &lduid) != 0) {
-                    warn("failed to get VPROC_GSK_MGR_UID");
-                    goto reattach_failed;
-                }
 
                 mach_port_t puc = MACH_PORT_NULL;
                 mach_port_t rootbs = MACH_PORT_NULL;
