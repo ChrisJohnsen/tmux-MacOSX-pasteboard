@@ -33,14 +33,11 @@
 #include <stdarg.h>    /* va_...   */
 #include <stdio.h>     /* fprintf, vfprintf  */
 #include <stdlib.h>    /* malloc, exit, free, atoi */
-#include <dlfcn.h>     /* dlsym    */
-#include <stdint.h>    /* uint64_t */
 #include <unistd.h>    /* execvp   */
 #include <sys/utsname.h> /* uname  */
 
-#include <mach/mach.h>
-
 #include "msg.h"
+#include "move_to_user_namespace.h"
 
 static const char version[] = "2.2";
 static const char supported_oses[] = "OS X 10.5-10.9";
@@ -135,86 +132,9 @@ int main(int argc, char *argv[]) {
         os = 100600;
     }
 
-    switch(os) {
-        case 100500:
-        case 100600:
-            {
-                static const char fn[] = "_vprocmgr_move_subset_to_user";
-                void *(*f)();
-                if (!(f = (void *(*)()) dlsym(RTLD_NEXT, fn))) {
-                    warn("unable to find %s: %s", fn, dlerror());
-                    goto reattach_failed;
-                }
-
-                void *r;
-                static const char bg[] = "Background";
-                /*
-                 * 10.5 has one fewer arg.
-                 * Since we are probably using a caller-cleans-up
-                 * calling convention, we could probably always just
-                 * call it with the extra arg, but we might as well
-                 * do things properly.
-                 */
-                if (os == 100500) {
-                    void *(*func)(uid_t, const char *) = f;
-                    r = func(getuid(), bg);
-                }
-                else if (os == 100600) {
-                    void *(*func)(uid_t, const char *, uint64_t) = f;
-                    r = func(getuid(), bg, 0);
-                } else {
-                    warn("BUG: unhandled reattach variation: %u", os);
-                    goto reattach_failed;
-                }
-
-                if (r) {
-                    warn("%s failed", fn);
-                    goto reattach_failed;
-                }
-            }
-            break;
-       case 101000:
-            {
-#define FIND_SYMBOL(NAME, RET, SIG) \
-                static const char fn_ ## NAME [] = # NAME; \
-                typedef RET (*ft_ ## NAME) SIG; \
-                ft_ ## NAME f_ ## NAME; \
-                if (!(f_ ## NAME = (ft_ ## NAME)dlsym(RTLD_NEXT, fn_ ## NAME))) { \
-                    warn("unable to find %s: %s", fn_ ## NAME, dlerror()); \
-                    goto reattach_failed; \
-                }
-
-                FIND_SYMBOL(bootstrap_get_root, kern_return_t, (mach_port_t, mach_port_t *))
-                FIND_SYMBOL(bootstrap_look_up_per_user, kern_return_t, (mach_port_t, const char *, uid_t, mach_port_t *))
-
-#undef FIND_SYMBOL
-
-                mach_port_t puc = MACH_PORT_NULL;
-                mach_port_t rootbs = MACH_PORT_NULL;
-                if (f_bootstrap_get_root(bootstrap_port, &rootbs) != KERN_SUCCESS) {
-                    warn("%s failed", fn_bootstrap_get_root);
-                    goto reattach_failed;
-                }
-                if (f_bootstrap_look_up_per_user(rootbs, NULL, getuid(), &puc) != KERN_SUCCESS) {
-                    warn("%s failed", fn_bootstrap_look_up_per_user);
-                    goto reattach_failed;
-                }
-
-                if (task_set_bootstrap_port(mach_task_self(), puc) != KERN_SUCCESS) {
-                    warn("task_set_bootstrap_port failed");
-                    goto reattach_failed;
-                }
-                if (mach_port_deallocate(mach_task_self(), bootstrap_port) != KERN_SUCCESS) {
-                    warn("mach_port_deallocate failed");
-                    goto reattach_failed;
-                }
-                bootstrap_port = puc;
-            }
-            break;
-       default:
+    if (move_to_user_namespace(os) != 0) {
 reattach_failed:
-            warn("%s: unable to reattach", argv[0]);
-            break;
+        warn("%s: unable to reattach", argv[0]);
     }
 
     char **newargs = NULL;
