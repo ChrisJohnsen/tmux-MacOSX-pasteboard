@@ -39,7 +39,6 @@
 #include <sys/utsname.h> /* uname  */
 
 #include <mach/mach.h>
-#include <bootstrap.h>
 
 #include "msg.h"
 
