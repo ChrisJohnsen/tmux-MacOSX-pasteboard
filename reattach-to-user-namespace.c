@@ -40,7 +40,7 @@
 #include "move_to_user_namespace.h"
 
 static const char version[] = "2.2";
-static const char supported_oses[] = "OS X 10.5-10.9";
+static const char supported_oses[] = "OS X 10.5-10.10";
 
 #if 0
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type, uint64_t flags); /* 10.6 */
@@ -117,19 +117,16 @@ int main(int argc, char *argv[]) {
      *   10.8 => 100600
      *   10.9 => 100600
      *   10.10=> 101000
-     *  newer => 100600 with warning
+     *  newer => 101000 with warning
      */
     if (100600 <= os && os <= 100900)
         os = 100600;
-    else if (os == 101000) {
-        // do nothing
-    }
     else if (os < 100500) {
         warn("%s: unsupported old OS, trying as if it were 10.5", argv[0]);
         os = 100500;
-    } else if (os > 100600) {
-        warn("%s: unsupported new OS, trying as if it were 10.6-10.9", argv[0]);
-        os = 100600;
+    } else if (os > 101000) {
+        warn("%s: unsupported new OS, trying as if it were 10.10", argv[0]);
+        os = 101000;
     }
 
     if (move_to_user_namespace(os) != 0) {
