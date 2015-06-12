@@ -2,7 +2,9 @@
 
 * Using the Mac OS X programs *pbpaste* and *pbcopy* under *tmux*
   does not work.  
-  Other services and unpatched builds of *screen* are also affected.
+  Other services and unpatched builds of *screen* are also affected.  
+  **Note:** Under Yosemite (and later) pasteboard access seems to work
+  fine without the program from this repository.
 
 * Certain undocumented, private API functions can fix the problem.
 
