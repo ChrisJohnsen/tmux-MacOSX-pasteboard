@@ -87,8 +87,8 @@ pasteboard into the current *tmux* pane.
 
 Similarly, for the `copy-pipe` command (new in *tmux* 1.8):
 
-    bind-key -t    vi-copy y   'reattach-to-user-namespace pbcopy'
-    bind-key -t emacs-copy M-w 'reattach-to-user-namespace pbcopy'
+    bind-key -t    vi-copy y   copy-pipe 'reattach-to-user-namespace pbcopy'
+    bind-key -t emacs-copy M-w copy-pipe 'reattach-to-user-namespace pbcopy'
 
 
 
