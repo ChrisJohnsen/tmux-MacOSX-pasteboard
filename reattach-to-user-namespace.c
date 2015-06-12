@@ -39,7 +39,7 @@
 #include "msg.h"
 #include "move_to_user_namespace.h"
 
-static const char version[] = "2.3";
+static const char version[] = "2.4";
 static const char supported_oses[] = "OS X 10.5-10.11";
 
 #if 0
