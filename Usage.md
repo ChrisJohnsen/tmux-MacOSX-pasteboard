@@ -172,6 +172,14 @@ alleviate.
     > then applications launched from the reattached shell do enable
     > retina rendering when appropriate.
 
+* `ABAddressBook` (via custom program)
+
+     [Issue #43][issue 43] mentions a custom Swift program using
+     `ABAddressBook` that does not work under *tmux* unless run with
+     the wrapper (tested on Yosemite).
+
+[issue 43]: https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard/issues/43
+
 
 There may also be other contexts (aside from “inside *tmux*”) where
 these same problems occur, but I have not yet heard of any.
