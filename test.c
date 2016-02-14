@@ -99,7 +99,7 @@ static void move_to_user(const char *opt) {
     else if (!strcmp(opt, "10.10"))
         r = move_to_user_namespace(101000);
     else
-        die(3, "move-to-user: unkown option: %s", opt);
+        die(3, "move-to-user: unknown option: %s", opt);
     if (r) die(3, "move_to_user_namespace failed");
 }
 
