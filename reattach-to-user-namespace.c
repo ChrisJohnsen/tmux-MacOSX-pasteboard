@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
                     argv[0], version, supported_oses);
             exit(0);
         } else if (*argv[1] == '-') {
-            warn("unkown option: %s", argv[1]);
+            warn("unknown option: %s", argv[1]);
             usage = 2;
         }
     }
