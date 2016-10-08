@@ -1,13 +1,5 @@
 # Basic Configuration
 
-> ## Note: Yosemite (and later)
->
-> Starting in Yosemite (10.10), the wrapper program does not seem to
-> be needed for pasteboard access. It may still be useful for some
-> [other services][other], however.
-
-[other]: #beyond-pasteboard-access
-
 The basic configuration is to set *tmux*’s `default-command` so that
 your interactive shell ends up reattached to the user bootstrap
 namespace:
