@@ -180,6 +180,14 @@ alleviate.
 
 [issue 43]: https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard/issues/43
 
+* MacVim using a font from ~/Library/Fonts for `guifont`
+
+    [Issue #54][issue 54] mentions MacVim (8.0; possibly older
+    versions, too) not being able to use a font from ~/Library/Fonts
+    for its `guifont` setting when run under *tmux* unless run with
+    the wrapper (tested under Sierra).
+
+[issue 54]: https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard/issues/54
 
 There may also be other contexts (aside from “inside *tmux*”) where
 these same problems occur, but I have not yet heard of any.
