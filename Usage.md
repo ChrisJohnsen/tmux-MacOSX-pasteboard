@@ -181,5 +181,16 @@ alleviate.
 
 [issue 54]: https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard/issues/54
 
+* `curl` using certificates in Keychain to verify peer
+
+    > `--cacert`
+    > (iOS and macOS only) If curl is built against Secure Transport [...] then
+    > curl will use the certificates in the system and user Keychain to verify
+    > the peer, which is the preferred method of verifying the peer's
+    > certificate chain.
+    
+    As of macOS Sierra, under tmux without `reattach-to-user-namespace`, `curl`
+    will fail to verify peers against Keychain-stored certificates.
+
 There may also be other contexts (aside from “inside *tmux*”) where
 these same problems occur, but I have not yet heard of any.
