@@ -192,5 +192,12 @@ alleviate.
     As of macOS Sierra, under tmux without `reattach-to-user-namespace`, `curl`
     will fail to verify peers against Keychain-stored certificates.
 
+* `ssh` - Keychain access for Secure Shell
+
+    On macOS Sierra *tmux* can only add your SSH keys to `ssh-agent`
+    with `reattach-to-user-namespace`,
+    see ["macOS Sierra without SSH-passphrase"](https://youtu.be/w5iZkhlg24M)
+    on YouTube.
+
 There may also be other contexts (aside from “inside *tmux*”) where
 these same problems occur, but I have not yet heard of any.
