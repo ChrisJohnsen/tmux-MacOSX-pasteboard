@@ -42,3 +42,4 @@ void warn(const char *fmt, ...);
 void warn_errno(const char *fmt, ...);
 void die(int ev, const char *fmt, ...) __attribute__((noreturn));
 void die_errno(int ev, const char *fmt, ...) __attribute__((noreturn));
+void msg_mute();

@@ -50,7 +50,8 @@ void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type
 static const char usage_msg[] = "\n"
     "    Reattach to the per-user bootstrap namespace in its \"Background\"\n"
     "    session then exec the program with args. If \"-l\" is given,\n"
-    "    rewrite the program's argv[0] so that it starts with a '-'.\n";
+    "    rewrite the program's argv[0] so that it starts with a '-'.\n"
+    "    \"-q\" for quiet logging.";
 
 int main(int argc, char *argv[]) {
     unsigned int login = 0, usage = 0;
@@ -58,6 +59,11 @@ int main(int argc, char *argv[]) {
     if (argc > 1) {
         if (!strcmp(argv[1], "-l")) {
             login = 1;
+            argv[1] = argv[0];
+            argv++;
+            argc--;
+        } else if (!strcmp(argv[1], "-q")) {
+            msg_mute();
             argv[1] = argv[0];
             argv++;
             argc--;
@@ -74,7 +80,7 @@ int main(int argc, char *argv[]) {
     if (argc < 2)
         usage = 1;
     if (usage)
-        die(usage, "usage: %s [-l] <program> [args...]\n%s", argv[0], usage_msg);
+        die(usage, "usage: %s [-l] [-q] <program> [args...]\n%s", argv[0], usage_msg);
 
     unsigned int os = 0;
 
