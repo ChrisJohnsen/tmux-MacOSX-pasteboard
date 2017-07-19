@@ -83,23 +83,32 @@ finish:
 }
 
 FILE *msgout = NULL;
+unsigned int quiet = 0;
+
+void msg_mute() {
+    quiet = 1;
+}
 
 void vmsg(const char *pre, const char *suf, const char *fmt, va_list ap) {
     vfmsg(msgout ? msgout : stderr, pre, suf, fmt, ap);
 }
 
 void msg(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vmsg(NULL, NULL, fmt, ap);
-    va_end(ap);
+    if (quiet == 0) {
+        va_list ap;
+        va_start(ap, fmt);
+        vmsg(NULL, NULL, fmt, ap);
+        va_end(ap);
+    }
 }
 
 void warn(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vmsg("warning: ", NULL, fmt, ap);
-    va_end(ap);
+    if (quiet == 0) {
+        va_list ap;
+        va_start(ap, fmt);
+        vmsg("warning: ", NULL, fmt, ap);
+        va_end(ap);
+    }
 }
 
 void warn_errno(const char *fmt, ...) {
@@ -112,11 +121,13 @@ void warn_errno(const char *fmt, ...) {
 }
 
 void die(int ev, const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vmsg("fatal: ", NULL, fmt, ap);
-    va_end(ap);
-    exit(ev);
+    if (quiet == 0) {
+        va_list ap;
+        va_start(ap, fmt);
+        vmsg("fatal: ", NULL, fmt, ap);
+        va_end(ap);
+        exit(ev);
+    }
 }
 
 void die_errno(int ev, const char *fmt, ...) {
