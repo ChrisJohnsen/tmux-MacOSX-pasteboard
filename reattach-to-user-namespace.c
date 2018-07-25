@@ -39,8 +39,8 @@
 #include "msg.h"
 #include "move_to_user_namespace.h"
 
-static const char version[] = "2.6";
-static const char supported_oses[] = "OS X 10.5-10.13";
+static const char version[] = "2.7";
+static const char supported_oses[] = "OS X 10.5-10.14";
 
 #if 0
 void * _vprocmgr_move_subset_to_user(uid_t target_user, const char *session_type, uint64_t flags); /* 10.6 */
