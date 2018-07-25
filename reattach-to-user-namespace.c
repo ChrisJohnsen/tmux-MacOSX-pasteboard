@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
      */
     if (100600 <= os && os <= 100900)
         os = 100600;
-    else if (101000 <= os && os <= 101300)
+    else if (101000 <= os && os <= 101400)
       os = 101000;
     else if (os < 100500) {
         warn("%s: unsupported old OS, trying as if it were 10.5", argv[0]);
