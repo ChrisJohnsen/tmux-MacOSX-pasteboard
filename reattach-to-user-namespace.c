@@ -120,6 +120,7 @@ int main(int argc, char *argv[]) {
      *   10.11=> 101000
      *   10.12=> 101000
      *   10.13=> 101000
+     *.  10.14=> 101000
      *  newer => 101000 with warning
      */
     if (100600 <= os && os <= 100900)
@@ -129,7 +130,7 @@ int main(int argc, char *argv[]) {
     else if (os < 100500) {
         warn("%s: unsupported old OS, trying as if it were 10.5", argv[0]);
         os = 100500;
-    } else if (os > 101300) {
+    } else if (os > 101400) {
         warn("%s: unsupported new OS, trying as if it were 10.10", argv[0]);
         os = 101000;
     }
