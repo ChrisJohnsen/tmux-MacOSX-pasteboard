@@ -83,6 +83,7 @@ int move_to_user_namespace(unsigned int os)
         return move_to_user_namespace__101000();
 
     default:
+        warn("move_to_user_namespace: unhandled os value: %u", os);
         return -1;
     }
 }
