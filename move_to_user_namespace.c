@@ -41,31 +41,12 @@ static int move_to_user_namespace__100600(void)
 
 static int move_to_user_namespace__101000(void)
 {
-    mach_port_t puc = MACH_PORT_NULL;
-    mach_port_t rootbs = MACH_PORT_NULL;
+    FIND_SYMBOL(_vprocmgr_detach_from_console, void *, (uint64_t))
 
-    FIND_SYMBOL(bootstrap_get_root, kern_return_t, (mach_port_t, mach_port_t *))
-    FIND_SYMBOL(bootstrap_look_up_per_user, kern_return_t, (mach_port_t, const char *, uid_t, mach_port_t *))
-
-    if (f_bootstrap_get_root(bootstrap_port, &rootbs) != KERN_SUCCESS) {
-        warn("%s failed", fn_bootstrap_get_root);
+    if (f__vprocmgr_detach_from_console(0) != NULL) {
+        warn("%s failed: can't detach from console", fn__vprocmgr_detach_from_console);
         return -1;
     }
-    if (f_bootstrap_look_up_per_user(rootbs, NULL, getuid(), &puc) != KERN_SUCCESS) {
-        warn("%s failed", fn_bootstrap_look_up_per_user);
-        return -1;
-    }
-
-    if (task_set_bootstrap_port(mach_task_self(), puc) != KERN_SUCCESS) {
-        warn("task_set_bootstrap_port failed");
-        return -1;
-    }
-    if (mach_port_deallocate(mach_task_self(), bootstrap_port) != KERN_SUCCESS) {
-        warn("mach_port_deallocate failed");
-        return -1;
-    }
-
-    bootstrap_port = puc;
 
     return 0;
 }
