@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <mach/mach.h>
+#include <servers/bootstrap.h>
+#include <Security/AuthSession.h>
 
 #include "msg.h"
 
@@ -39,13 +41,57 @@ static int move_to_user_namespace__100600(void)
     return 0;
 }
 
+#define VPROC_GSK_MGR_NAME 6
+
 static int move_to_user_namespace__101000(void)
 {
-    FIND_SYMBOL(_vprocmgr_detach_from_console, void *, (uint64_t))
+    char *mgr_name = NULL;
 
-    if (f__vprocmgr_detach_from_console(0) != NULL) {
-        warn("%s failed: can't detach from console", fn__vprocmgr_detach_from_console);
+    FIND_SYMBOL(vproc_swap_string, void *, (void *, int64_t, const char *, char **))
+
+    if (f_vproc_swap_string(NULL, VPROC_GSK_MGR_NAME, NULL, &mgr_name)) {
+        warn("%s failed", fn_vproc_swap_string);
         return -1;
+    }
+
+    if (strcmp("System", mgr_name) == 0) {
+        kern_return_t kr;
+        mach_port_t puc = MACH_PORT_NULL;
+        mach_port_t rootbs = MACH_PORT_NULL;
+
+        FIND_SYMBOL(bootstrap_get_root, kern_return_t, (mach_port_t, mach_port_t *))
+        FIND_SYMBOL(bootstrap_strerror, const char *, (kern_return_t))
+        FIND_SYMBOL(bootstrap_look_up_per_user, kern_return_t, (mach_port_t, const char *, uid_t, mach_port_t *))
+
+        if ((kr = f_bootstrap_get_root(bootstrap_port, &rootbs)) != KERN_SUCCESS) {
+            warn("%s failed: %d %s", fn_bootstrap_get_root, kr, f_bootstrap_strerror(kr));
+            return -1;
+        }
+
+        if ((kr = f_bootstrap_look_up_per_user(rootbs, NULL, getuid(), &puc)) != KERN_SUCCESS) {
+            warn("%s failed: %d %s", fn_bootstrap_look_up_per_user, kr, f_bootstrap_strerror(kr));
+            return -1;
+        }
+
+
+        if ((kr = task_set_bootstrap_port(mach_task_self(), puc)) != KERN_SUCCESS) {
+            warn("task_set_bootstrap_port failed: %d %s", kr, mach_error_string(kr));
+            return -1;
+        }
+
+       if ((kr = mach_port_deallocate(mach_task_self(), bootstrap_port)) != KERN_SUCCESS) {
+            warn("mach_port_deallocate failed: %d %s", kr, mach_error_string(kr));
+            return -1;
+        }
+
+        bootstrap_port = puc;
+    } else {
+        FIND_SYMBOL(_vprocmgr_detach_from_console, void *, (uint64_t))
+
+        if (f__vprocmgr_detach_from_console(0) != NULL) {
+            warn("%s failed", fn__vprocmgr_detach_from_console);
+            return -1;
+        }
     }
 
     return 0;
@@ -68,3 +114,4 @@ int move_to_user_namespace(unsigned int os)
         return -1;
     }
 }
+
