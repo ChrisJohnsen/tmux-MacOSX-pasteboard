@@ -1,8 +1,15 @@
 # Quick Summary
 
-* Using the Mac OS X programs *pbpaste* and *pbcopy* under *tmux*
-  does not work.  
+* Using the Mac OS X programs *pbpaste* and *pbcopy* under old
+  versions of *tmux* may not work.  
   Other services and unpatched builds of *screen* are also affected.
+
+* You may not even need the program from this repository!
+
+  *tmux* version 2.6 (2017 September) incorporated the functionality
+  of the wrapper program. If you are using a new enough *tmux*, you
+  may be able to skip using the wrapper in your *tmux*
+  configuration.
 
 * Certain undocumented, private API functions can fix the problem.
 
