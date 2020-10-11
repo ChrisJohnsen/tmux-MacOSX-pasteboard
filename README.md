@@ -58,6 +58,19 @@ Thus, my wrapper-based workaround:
 1. Enjoy being able to use *pbpaste*, *pbcopy*, etc. in new shell
    windows.
 
+Alternatively, add reattach-to-user-namespace to .zshrc (or .bash_profile, or similar):
+
+    # Fix broken pasteboard support in tmux under OSX
+    if type pbcopy >/dev/null 2>&1 && ! pbpaste >/dev/null 2>&1; then
+      if type reattach-to-user-namespace >/dev/null 2>&1; then
+        exec reattach-to-user-namespace -l zsh
+      else
+        echo "System clipboard link is broken, but reattach-to-user-namespace not found." >&2
+        echo "Please install reattach-to-user-namespace." >&2
+        echo "https://github.com/ChrisJohnsen/tmux-MacOSX-pasteboard" >&2
+      fi
+    fi
+
 # Purpose of These Programs
 
 The programs in this repository were created to diagnose and enable
